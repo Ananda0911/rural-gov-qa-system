@@ -51,6 +51,15 @@ def login_page(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse(request, "login.html", {"request": request, "error": ""})
 
 
+@router.get("/register")
+def register_page(request: Request, db=Depends(get_db)):
+    resolved = resolve_session(db, request)
+    if resolved:
+        u = resolved[1]
+        raise _redirect("/change-password" if u.must_change_password else "/")
+    return templates.TemplateResponse(request, "register.html", {"request": request})
+
+
 @router.get("/change-password")
 def change_password_page(request: Request, user=Depends(page_user)):
     return templates.TemplateResponse(request, "change_password.html",

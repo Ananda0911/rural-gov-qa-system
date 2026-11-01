@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>注册账号 - 乡村智能问答系统</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container" style="max-width:420px; margin-top:7vh;">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:22px; font-weight:700; color:var(--brand); margin-bottom:4px;">乡村智能问答系统</div>
+    <div class="page-sub">注册一个账号，开始使用村务问答助手</div>
+  </div>
+  <div class="card">
+    <label class="f"><b>姓名 / 昵称</b>
+      <input type="text" id="display_name" maxlength="50" placeholder="展示用名称，可留空（默认用用户名）">
+    </label>
+    <label class="f"><b>用户名</b>
+      <input type="text" id="username" autocomplete="username" maxlength="20" placeholder="3-20 位字母、数字或下划线">
+    </label>
+    <label class="f"><b>密码</b>
+      <input type="password" id="password" autocomplete="new-password" placeholder="至少 8 位，不能与用户名相同">
+    </label>
+    <label class="f"><b>确认密码</b>
+      <input type="password" id="confirm_pwd" autocomplete="new-password" placeholder="再输入一次密码">
+    </label>
+    <div id="err" style="display:none; color:var(--danger); font-size:13px; margin-bottom:10px;"></div>
+    <button class="btn primary" style="width:100%;" id="btnReg" onclick="doRegister()">注 册</button>
+    <div class="hint" style="margin-top:12px; text-align:center;">
+      已有账号？<a href="/login" style="color:var(--brand);">返回登录</a>
+    </div>
+  </div>
+</div>
+<script>
+async function doRegister() {
+  var btn = document.getElementById('btnReg');
+  var err = document.getElementById('err');
+  btn.disabled = true; btn.textContent = '注册中…'; err.style.display = 'none';
+  try {
+    var resp = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        display_name: display_name.value.trim(),
+        username: username.value.trim(),
+        password: password.value,
+        confirm: confirm_pwd.value
+      })
+    });
+    var data = await resp.json();
+    if (!resp.ok) throw new Error((data.detail && data.detail.message) || '注册失败');
+    location.href = data.redirect || '/';
+  } catch (e) {
+    err.textContent = e.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = '注 册';
+  }
+}
+document.getElementById('confirm_pwd').addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter') doRegister();
+});
+</script>
+</body>
+</html>

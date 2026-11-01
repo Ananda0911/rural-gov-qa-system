@@ -1,4 +1,6 @@
-"""认证 API：登录（失败计数/锁定）、登出、改密（旧密码验证）"""
+"""认证 API：登录（失败计数/锁定）、注册、登出、改密（旧密码验证）"""
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 
@@ -15,6 +17,47 @@ router = APIRouter(prefix="/api/auth")
 class LoginBody(BaseModel):
     username: str
     password: str
+
+
+class RegisterBody(BaseModel):
+    username: str
+    password: str
+    confirm: str
+    display_name: str = ""
+
+
+@router.post("/register")
+def register(body: RegisterBody, request: Request, response: Response, db=Depends(get_db)):
+    """自助注册：创建 staff 角色账号并自动登录（与管理员创建的账号同权限体系）"""
+    username = body.username.strip()
+    display_name = body.display_name.strip() or username
+
+    def err(status: int, code: str, message: str):
+        return HTTPException(status_code=status, detail={"code": code, "message": message})
+
+    if not re.fullmatch(r"[A-Za-z0-9_]{3,20}", username):
+        raise err(400, "invalid_username", "用户名需 3-20 位字母、数字或下划线")
+    if body.password != body.confirm:
+        raise err(400, "password_mismatch", "两次输入的密码不一致")
+    if len(body.password) < 8 or body.password == username:
+        raise err(400, "weak_password", "密码至少 8 位，且不得与用户名相同")
+    if db.query(User).filter(User.username == username).first():
+        raise err(409, "username_taken", "该用户名已被使用")
+
+    user = User(username=username, display_name=display_name, org_label="",
+                role="staff", password_hash=hash_password(body.password),
+                status="active", must_change_password=0)
+    db.add(user)
+    db.flush()
+    log_action(db, user, "register", "user", user.id)
+    sess = create_session(db, user.id)
+    db.commit()
+    response.set_cookie(
+        security.SESSION_COOKIE, sess.session_id, max_age=settings.session_days * 86400,
+        httponly=True, samesite="lax", path="/",
+    )
+    return {"ok": True, "csrf_token": sess.csrf_token,
+            "must_change_password": False, "redirect": "/"}
 
 
 class ChangePasswordBody(BaseModel):

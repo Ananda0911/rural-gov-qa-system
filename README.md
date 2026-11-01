@@ -44,6 +44,9 @@ start.bat          # 或: venv\Scripts\python.exe manage.py serve
 # 浏览器访问 http://127.0.0.1:8000
 ```
 
+> Windows 用户也可双击项目根目录的 **一键启动.bat**：自动启动服务并打开浏览器。
+> 首次使用可在登录页点「注册一个」自助创建账号（staff 角色），或使用管理员账号。
+
 > 演示数据库 `data/app.db` 已含真实向量；若切换 embedding 服务商，运行
 > `venv\Scripts\python.exe manage.py reindex` 重建向量。
 
