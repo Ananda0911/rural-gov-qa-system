@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf" content="{{ csrf_token }}">
+<title>{% block title %}乡村智能问答系统{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <span class="logo">乡村智能问答系统</span>
+  <nav>
+    <a href="/" class="{{ 'active' if request.url.path == '/' }}">问答工作台</a>
+    <a href="/records" class="{{ 'active' if request.url.path == '/records' }}">我的记录</a>
+    {% if user.role == 'admin' %}
+      <a href="/admin/kb" class="{{ 'active' if request.url.path == '/admin/kb' }}">知识库</a>
+      <a href="/admin/unanswered" class="{{ 'active' if request.url.path == '/admin/unanswered' }}">未答问题</a>
+      <a href="/admin/accounts" class="{{ 'active' if request.url.path == '/admin/accounts' }}">账号管理</a>
+      <a href="/admin/logs" class="{{ 'active' if request.url.path == '/admin/logs' }}">操作留痕</a>
+    {% endif %}
+  </nav>
+  <span class="whoami">
+    {{ user.display_name }}
+    <span class="badge">{{ '管理员' if user.role == 'admin' else '工作人员' }}</span>
+    <a href="javascript:void(0)" onclick="logout()" style="color:#fff">退出</a>
+  </span>
+</header>
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+<script src="/static/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

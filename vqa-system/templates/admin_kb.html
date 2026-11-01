@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}知识库管理 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="page-title">知识库管理</div>
+  <div class="page-sub">草稿 → 发布 →（手动下线 / 到期自动过期）→ 可重新发布；编辑不改状态并刷新核实时间。</div>
+  <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+    <div class="tabs" style="margin-bottom:0;">
+      <a href="javascript:void(0)" data-st="" class="on">全部</a>
+      <a href="javascript:void(0)" data-st="draft">草稿</a>
+      <a href="javascript:void(0)" data-st="published">已发布</a>
+      <a href="javascript:void(0)" data-st="offline">已下线</a>
+      <a href="javascript:void(0)" data-st="expired">已过期</a>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <input type="text" id="kw" placeholder="按标题搜索" style="width:180px;">
+      <button class="btn sm" onclick="load(1)">搜索</button>
+      <button class="btn sm" onclick="impOpen()">文档导入</button>
+      <button class="btn primary sm" onclick="openCreate()">新增条目</button>
+    </div>
+  </div>
+  <table class="grid">
+    <thead><tr><th style="width:46px;">ID</th><th>标题</th><th style="width:90px;">分类</th>
+      <th style="width:82px;">状态</th><th style="width:104px;">失效日期</th><th>发布单位</th>
+      <th style="width:150px;">最后核实</th><th style="width:150px;">操作</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="empty" id="empty" style="display:none;">暂无条目</div>
+  <div style="margin-top:12px; text-align:center;">
+    <button class="btn sm ghost" id="moreBtn" onclick="load(page+1)" style="display:none;">加载更多</button>
+  </div>
+</div>
+
+<!-- 新增/编辑弹层 -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeEdit()">×</button>
+    <h3 id="editTitle">新增条目</h3>
+    <div id="groupHint" style="display:none;" class="banner"></div>
+    <label class="f"><b>标题<span class="req">*</span></b>
+      <input type="text" id="f_title" maxlength="200"></label>
+    <div class="two-col">
+      <label class="f"><b>分类<span class="req">*</span></b>
+        <select id="f_category">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></label>
+      <label class="f"><b>失效日期（可空，到期自动下线）</b>
+        <input type="date" id="f_expire"></label>
+    </div>
+    <label class="f"><b>正文<span class="req">*</span>（分点口径，答案的依据）</b>
+      <textarea id="f_content" style="min-height:150px;"></textarea></label>
+    <div class="two-col">
+      <label class="f"><b>依据文件名<span class="req">*</span>（含文号，无依据不入库）</b>
+        <input type="text" id="f_basis" maxlength="200"></label>
+      <label class="f"><b>发布单位<span class="req">*</span></b>
+        <input type="text" id="f_org" maxlength="100"></label>
+    </div>
+    <div class="f" id="f_file" style="display:none;"></div>
+    <label class="f"><b>标签（逗号分隔，检索辅助）</b>
+      <input type="text" id="f_tags" placeholder="如：低保, 社会救助"></label>
+    <div id="editErr" style="display:none; color:var(--danger); font-size:13px; margin-bottom:8px;"></div>
+    <div class="foot">
+      <button class="btn ghost" onclick="closeEdit()">取消</button>
+      <button class="btn primary" id="btnSave" onclick="saveEntry()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 下线原因弹层 -->
+<div class="overlay" id="offOverlay">
+  <div class="modal" style="width:460px;">
+    <button class="close-x" onclick="offOverlay.classList.remove('show')">×</button>
+    <h3>下线条目</h3>
+    <div id="offName" style="font-weight:600; margin-bottom:10px;"></div>
+    <label class="f"><b>下线原因<span class="req">*</span>（留痕展示）</b>
+      <select id="off_reason_sel">
+        <option>政策到期</option><option>内容有误</option><option>依据文件废止</option>
+        <option>由新条目替代</option><option>其他</option>
+      </select></label>
+    <label class="f"><b>补充说明</b>
+      <input type="text" id="off_reason_text" maxlength="200" placeholder="补充说明（可空，将与所选原因一并记录）"></label>
+    <div class="foot">
+      <button class="btn ghost" onclick="offOverlay.classList.remove('show')">取消</button>
+      <button class="btn danger" onclick="doOffline()">确认下线</button>
+    </div>
+  </div>
+</div>
+
+<!-- 文档导入弹层（方案 B：切分后存入向量知识库） -->
+<div class="overlay" id="impOverlay">
+  <div class="modal" style="width:860px;">
+    <button class="close-x" onclick="impClose()">×</button>
+    <h3>文档导入</h3>
+    <div class="page-sub" style="margin:2px 0 10px;">
+      支持 .docx / .pdf（文字版）/ .txt / .md，≤5MB。流程：解析预览 → 人工核对 → 存为草稿 → 发布后自动切片并向量化。
+      确认保存后，原始文件将自动归档到服务器 data/uploads/ 目录，并可在条目编辑页下载。
+    </div>
+
+    <div id="impStep1">
+      <label class="f"><b>选择文件</b>
+        <input type="file" id="impFile" accept=".docx,.pdf,.txt,.md"></label>
+      <div id="impErr" style="display:none; color:var(--danger); font-size:13px; margin:8px 0;"></div>
+      <div class="foot" style="justify-content:flex-start;">
+        <button class="btn primary" id="impParseBtn" onclick="impParse()">解析预览</button>
+      </div>
+    </div>
+
+    <div id="impStep2" style="display:none;">
+      <div class="banner" style="display:block; margin-bottom:10px;" id="impChunkInfo"></div>
+      <label class="f"><b>标题<span class="req">*</span></b>
+        <input type="text" id="i_title" maxlength="200"></label>
+      <div class="two-col">
+        <label class="f"><b>分类<span class="req">*</span></b>
+          <select id="i_category">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></label>
+        <label class="f"><b>发布单位<span class="req">*</span></b>
+          <input type="text" id="i_org" maxlength="100"></label>
+      </div>
+      <div class="two-col">
+        <label class="f"><b>依据文件名<span class="req">*</span></b>
+          <input type="text" id="i_basis" maxlength="200"></label>
+        <label class="f"><b>失效日期（可空，到期自动下线）</b>
+          <input type="date" id="i_expire"></label>
+      </div>
+      <label class="f"><b>标签（逗号分隔，检索辅助）</b>
+        <input type="text" id="i_tags" placeholder="如：低保, 社会救助"></label>
+      <label class="f"><b>正文（全文入库，可修正解析误读；发布时按最终正文切分向量化）</b>
+        <textarea id="i_content" style="min-height:140px; font-size:13px;"></textarea></label>
+      <details style="margin-bottom:10px;">
+        <summary style="cursor:pointer; font-size:13px; color:var(--brand-dark);">切片预览（只读）</summary>
+        <div id="impChunks" style="max-height:160px; overflow:auto; border:1px solid var(--border); border-radius:6px; padding:8px; font-size:12px; line-height:1.7; margin-top:6px;"></div>
+      </details>
+      <div id="impErr2" style="display:none; color:var(--danger); font-size:13px; margin-bottom:8px;"></div>
+      <div class="foot">
+        <button class="btn ghost" onclick="impReset()">重新选择文件</button>
+        <button class="btn primary" id="impSaveBtn" onclick="impConfirm(false)">存为草稿</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+var page = 1, editId = null, sourceGroupId = null;
+var stMap = { draft: ['草稿', 'b-gray'], published: ['已发布', 'b-green'],
+  offline: ['已下线', 'b-gray'], expired: ['已过期', 'b-red'] };
+
+document.querySelectorAll('.tabs a[data-st]').forEach(function (a) {
+  a.onclick = function () {
+    document.querySelectorAll('.tabs a[data-st]').forEach(function (x) { x.classList.remove('on'); });
+    a.classList.add('on');
+    load(1);
+  };
+});
+function currentStatus() {
+  var on = document.querySelector('.tabs a.on');
+  return on ? on.getAttribute('data-st') : '';
+}
+async function load(p) {
+  page = p || 1;
+  var st = currentStatus(), q = document.getElementById('kw').value.trim();
+  var data = await api('/api/kb?status=' + st + '&q=' + encodeURIComponent(q) + '&page=' + page);
+  if (page === 1) tbody.innerHTML = '';
+  data.items.forEach(function (e) { tbody.appendChild(row(e)); });
+  document.getElementById('empty').style.display = data.items.length ? 'none' : page === 1 ? 'block' : 'none';
+  document.getElementById('moreBtn').style.display = (page * 20 < data.total) ? 'inline-block' : 'none';
+}
+function row(e) {
+  var st = stMap[e.status] || [e.status, 'b-gray'];
+  var tr = document.createElement('tr');
+  var acts = '<button class="btn sm" onclick="openEdit(' + e.id + ')">编辑</button>';
+  if (e.status === 'published') {
+    acts += '<button class="btn sm danger" onclick="askOffline(' + e.id + ')">下线</button>';
+  } else {
+    acts += '<button class="btn sm primary" onclick="doPublish(' + e.id + ', this)">发布</button>';
+  }
+  tr.innerHTML = '<td>' + e.id + '</td>'
+    + '<td>' + esc(e.title) + (e.source_group_id ? ' <span class="badge b-blue">由未答组补充</span>' : '') + '</td>'
+    + '<td>' + esc(e.category) + '</td>'
+    + '<td><span class="badge ' + st[1] + '">' + st[0] + '</span></td>'
+    + '<td class="mono">' + (e.expire_date || '—') + '</td>'
+    + '<td>' + esc(e.publish_org) + '</td>'
+    + '<td class="mono" style="font-size:12px;">' + (e.last_verified_at || '—') + '</td>'
+    + '<td><div class="row-actions">' + acts + '</div></td>';
+  return tr;
+}
+function fmtSize(n) {
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+function openCreate(groupId) {
+  editId = null;
+  editTitle.textContent = '新增条目（保存为草稿）';
+  ['f_title', 'f_category', 'f_content', 'f_basis', 'f_org', 'f_expire', 'f_tags'].forEach(function (id) { document.getElementById(id).value = ''; });
+  document.getElementById('f_file').style.display = 'none';
+  sourceGroupId = groupId || null;
+  document.getElementById('groupHint').style.display = sourceGroupId ? 'block' : 'none';
+  if (sourceGroupId) {
+    groupHint.textContent = '该条目来自未答问题组 #' + sourceGroupId + ' 的补充；发布后将自动把该组标记为「已补充」并建立双向关联。';
+  }
+  editOverlay.classList.add('show');
+}
+async function openEdit(id) {
+  var e = await api('/api/kb/' + id);
+  editId = id;
+  editTitle.textContent = '编辑条目 #' + id + '（' + (stMap[e.status][0]) + '）';
+  f_title.value = e.title; f_category.value = e.category; f_content.value = e.content;
+  f_basis.value = e.basis_file; f_org.value = e.publish_org;
+  f_expire.value = e.expire_date || ''; f_tags.value = e.tags.join(', ');
+  sourceGroupId = e.source_group_id;
+  document.getElementById('groupHint').style.display = 'none';
+  var ff = document.getElementById('f_file');
+  if (e.file) {
+    ff.style.display = 'block';
+    ff.innerHTML = '<b>归档原件</b>'
+      + '<div style="font-size:13px; color:var(--text-muted); padding-top:4px;">'
+      + esc(e.file.orig_filename) + '（' + fmtSize(e.file.size) + ' · 上传于 ' + esc(e.file.uploaded_at) + '）'
+      + ' <a href="/api/kb/' + id + '/file">下载原件</a></div>';
+  } else {
+    ff.style.display = 'none';
+  }
+  editOverlay.classList.add('show');
+}
+function closeEdit() { editOverlay.classList.remove('show'); }
+function collectBody(force) {
+  return {
+    title: f_title.value.trim(), category: f_category.value, content: f_content.value.trim(),
+    basis_file: f_basis.value.trim(), publish_org: f_org.value.trim(),
+    expire_date: f_expire.value || '', tags: f_tags.value.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean),
+    source_group_id: sourceGroupId, force: !!force
+  };
+}
+async function saveEntry(skipConfirm) {
+  var body = collectBody(false);
+  if (!body.title || !body.content || !body.basis_file || !body.publish_org) {
+    editErr.textContent = '标题 / 正文 / 依据文件名 / 发布单位为必填（无依据不入库）';
+    editErr.style.display = 'block'; return;
+  }
+  editErr.style.display = 'none';
+  btnSave.disabled = true;
+  try {
+    if (editId) await api('/api/kb/' + editId, 'PUT', body);
+    else await api('/api/kb', 'POST', body);
+    toast('保存成功'); closeEdit(); load(1);
+  } catch (e) {
+    if (e.code === 'similar_titles' && !skipConfirm) {
+      var names = (e.data.similar_to || []).map(function (s) { return '《' + s.title + '》(#' + s.id + ')'; }).join('、');
+      if (confirm('检测到与已发布条目标题高度相似：' + names + '\n可能为原条目的更新版本，建议编辑原条目。\n\n仍要保存为新条目吗？')) {
+        btnSave.disabled = false;
+        return saveEntry(true);
+      }
+    } else {
+      editErr.textContent = e.message; editErr.style.display = 'block';
+    }
+  }
+  btnSave.disabled = false;
+}
+async function doPublish(id, btn) {
+  if (!confirm('确认发布该条目？发布后即时生效（检索可命中），并同步更新关键词与向量索引。')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '发布中…'; }
+  toast('正在发布：同步建立关键词与切片向量索引（约需十几秒），请勿重复点击…');
+  try {
+    var r = await api('/api/kb/' + id + '/publish', 'POST', {});
+    toast(r.vector_indexed ? '发布成功，索引已同步。条目状态变更为「已发布」，如当前列表为空请切换状态筛选查看'
+      : '发布成功（向量索引暂未建立，稍后可运行重建）');
+    if (r.closed_group) toast('关联的未答问题组 #' + r.closed_group + ' 已标记为「已补充」');
+    load(page);
+  } catch (e) {
+    toast(e.message, true);
+    if (btn) { btn.disabled = false; btn.textContent = '发布'; }
+  }
+}
+var offId = null;
+function askOffline(id) {
+  offId = id;
+  offName.textContent = '条目 #' + id;
+  offOverlay.classList.add('show');
+}
+async function doOffline() {
+  var reason = off_reason_sel.value + (off_reason_text.value.trim() ? '：' + off_reason_text.value.trim() : '');
+  try {
+    await api('/api/kb/' + offId + '/offline', 'POST', { reason: reason });
+    toast('已下线'); offOverlay.classList.remove('show'); load(page);
+  } catch (e) { toast(e.message, true); }
+}
+// ---------- 文档导入 ----------
+var impData = null;
+function impOpen() { impReset(); impOverlay.classList.add('show'); }
+function impClose() { impOverlay.classList.remove('show'); }
+function impReset() {
+  impData = null;
+  impFile.value = '';
+  impErr.style.display = 'none'; impErr2.style.display = 'none';
+  impStep1.style.display = 'block'; impStep2.style.display = 'none';
+  impParseBtn.disabled = false; impParseBtn.textContent = '解析预览';
+  impSaveBtn.disabled = false;
+}
+function impCsrf() {
+  var m = document.querySelector('meta[name="csrf"]');
+  return m ? m.getAttribute('content') : '';
+}
+async function impParse() {
+  var f = impFile.files[0];
+  impErr.style.display = 'none';
+  if (!f) { impErr.textContent = '请先选择文件'; impErr.style.display = 'block'; return; }
+  if (f.size > 5 * 1024 * 1024) { impErr.textContent = '文件超过 5MB 上限'; impErr.style.display = 'block'; return; }
+  impParseBtn.disabled = true; impParseBtn.textContent = '解析中…';
+  try {
+    var fd = new FormData();
+    fd.append('file', f);
+    var resp = await fetch('/api/admin/import/parse', {
+      method: 'POST', headers: { 'X-CSRF-Token': impCsrf() }, body: fd
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      var d = data && data.detail ? data.detail : (data || {});
+      throw new Error(d.message || '解析失败');
+    }
+    impData = data;
+    i_title.value = data.suggest_title || '';
+    i_basis.value = data.basis_file || '';
+    i_content.value = data.text || '';
+    i_org.value = ''; i_expire.value = ''; i_tags.value = '';
+    i_category.value = i_category.options[0].value;
+    impChunkInfo.textContent = '解析成功：全文 ' + data.text.length + ' 字，切分为 ' + data.chunks.length
+      + ' 片。存草稿并发布后，系统将逐片向量化，检索可精确到片段；原始文件将随草稿一并归档。';
+    impChunks.innerHTML = data.chunks.map(function (c) {
+      return '<div style="padding:4px 0; border-bottom:1px dashed var(--border);">'
+        + '<b>切片 ' + (c.index + 1) + '</b>（' + c.text.length + ' 字）：' + esc(c.preview) + '</div>';
+    }).join('');
+    impStep1.style.display = 'none';
+    impStep2.style.display = 'block';
+  } catch (e) {
+    impErr.textContent = e.message; impErr.style.display = 'block';
+  }
+  impParseBtn.disabled = false; impParseBtn.textContent = '解析预览';
+}
+async function impConfirm(skipConfirm) {
+  var body = {
+    title: i_title.value.trim(), category: i_category.value,
+    content: i_content.value.trim(), basis_file: i_basis.value.trim(),
+    publish_org: i_org.value.trim(), expire_date: i_expire.value || '',
+    tags: i_tags.value.split(/[,，]/).map(function (t) { return t.trim(); }).filter(Boolean),
+    force: !!skipConfirm,
+    file_token: impData ? impData.file_token : null
+  };
+  if (!body.title || !body.content || !body.basis_file || !body.publish_org) {
+    impErr2.textContent = '标题 / 正文 / 依据文件名 / 发布单位为必填（无依据不入库）';
+    impErr2.style.display = 'block'; return;
+  }
+  impErr2.style.display = 'none';
+  impSaveBtn.disabled = true;
+  try {
+    await api('/api/admin/import/confirm', 'POST', body);
+    toast('已保存为草稿，请在列表中核对后发布');
+    impClose(); load(1);
+  } catch (e) {
+    if (e.code === 'similar_titles' && !skipConfirm) {
+      var names = (e.data.similar_to || []).map(function (s) { return '《' + s.title + '》(#' + s.id + ')'; }).join('、');
+      if (confirm('检测到与已发布条目标题高度相似：' + names + '\n可能为原条目的更新版本，建议编辑原条目。\n\n仍要保存为新条目吗？')) {
+        impSaveBtn.disabled = false;
+        return impConfirm(true);
+      }
+    } else {
+      impErr2.textContent = e.message; impErr2.style.display = 'block';
+    }
+  }
+  impSaveBtn.disabled = false;
+}
+
+// 「去补充」入口：/admin/kb?group_id=N
+(function () {
+  var gid = new URLSearchParams(location.search).get('group_id');
+  if (gid) openCreate(parseInt(gid));
+})();
+load(1);
+</script>
+{% endblock %}

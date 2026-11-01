@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乡村智能问答系统 技术方案 v1.0（评审稿）</title>
+<style>
+:root{
+  --primary:#2e7d4f; --primary-deep:#1f5c39; --primary-weak:#eaf3ee;
+  --ink:#1f2d24; --muted:#68766d; --line:#e2e8e3; --bg:#f5f7f5; --card:#ffffff;
+  --amber:#b8860b; --amber-bg:#fdf6e3; --blue:#2b6cb0; --blue-bg:#ebf4fb;
+  --green:#2e7d4f; --orange:#c05e1a; --gray:#77807a; --red:#b3362b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.75}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+.doc-hero{background:linear-gradient(135deg,#1f5c39 0%,#2e7d4f 60%,#3d8f61 100%);color:#fff;padding:52px 0 44px}
+.doc-hero .kicker{opacity:.85;font-size:13px;letter-spacing:.2em;margin-bottom:10px}
+.doc-hero h1{margin:0 0 14px;font-size:32px;line-height:1.3;font-weight:700}
+.doc-hero p.sub{margin:0 0 22px;opacity:.92;max-width:760px}
+.meta-chips{display:flex;flex-wrap:wrap;gap:10px}
+.meta-chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  border-radius:999px;padding:4px 14px;font-size:13px}
+.toc{position:sticky;top:0;z-index:60;background:rgba(245,247,245,.96);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+.toc a{white-space:nowrap;font-size:13.5px;color:var(--muted);padding:5px 12px;border-radius:8px}
+.toc a:hover{background:var(--primary-weak);color:var(--primary-deep);text-decoration:none}
+section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:34px 38px;margin:26px 0;box-shadow:0 1px 3px rgba(31,45,36,.04)}
+h2{font-size:22px;margin:0 0 6px;color:var(--primary-deep);display:flex;align-items:center;gap:10px}
+h2 .no{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border-radius:8px;background:var(--primary-weak);color:var(--primary);font-size:15px}
+.sec-lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+h3{font-size:17px;margin:26px 0 10px;color:var(--ink)}
+h4{font-size:15px;margin:18px 0 8px}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th{background:#f1f5f1;text-align:left;padding:9px 12px;border:1px solid var(--line);font-weight:600}
+td{padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+code{background:#f1f5f1;border-radius:4px;padding:1px 6px;font-size:13.5px}
+pre{background:#202b24;color:#d9e6dc;border-radius:10px;padding:16px 18px;overflow-x:auto;
+  font-size:13px;line-height:1.7;margin:12px 0}
+pre b{color:#8fd4a3;font-weight:700}
+.chip{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.chip.tbd{background:var(--amber-bg);color:var(--amber);border:1px solid #ecd9a0}
+.chip.asm{background:var(--blue-bg);color:var(--blue);border:1px solid #bcd8ef}
+.note{border-left:3px solid var(--primary);background:var(--primary-weak);
+  border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+.note.warn{border-left-color:var(--amber);background:var(--amber-bg)}
+.note.blue{border-left-color:var(--blue);background:var(--blue-bg)}
+mark{background:#fff3c4;padding:0 3px;border-radius:3px}
+.win{border:1px solid #d3dcd4;border-radius:12px;overflow:hidden;margin:18px 0;
+  box-shadow:0 6px 22px rgba(31,45,36,.08);background:#fff}
+.win-bar{background:#e9eee9;padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #dbe2dc}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.r{background:#e8746a}.dot.y{background:#ecc94b}.dot.g{background:#6fcf7c}
+.win-title{font-size:12.5px;color:var(--muted);margin-left:8px}
+.win-note{margin:10px 14px;font-size:12.5px;color:var(--amber);
+  background:var(--amber-bg);border:1px dashed #ecd9a0;border-radius:8px;padding:6px 12px}
+.btn{display:inline-block;border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:8px;padding:6px 16px;font-size:13.5px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-deep);color:#fff}
+.btn.sm{padding:3px 12px;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ===== 架构图 ===== */
+.arch{border:2px solid var(--primary);border-radius:14px;padding:20px 22px 14px;background:#fbfdfb;margin:16px 0}
+.arch-tag{display:inline-block;background:var(--primary);color:#fff;font-size:12.5px;
+  border-radius:999px;padding:2px 14px;margin-bottom:14px}
+.arch-row{display:flex;gap:14px;align-items:stretch}
+.arch-main{flex:1;min-width:0}
+.arch-box{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px 14px}
+.arch-box .bt{font-weight:700;font-size:14px;color:var(--primary-deep);margin-bottom:8px}
+.arch-nodes{display:flex;flex-wrap:wrap;gap:8px}
+.arch-node{border:1px solid #cfe0d3;background:#f4f9f5;border-radius:8px;padding:5px 12px;font-size:12.8px;color:#2c4a36}
+.arch-node.ext{border-color:#bcd8ef;background:var(--blue-bg);color:var(--blue)}
+.arch-node.dim{border-color:#dcdcd6;background:#f6f6f4;color:#7a7a72}
+.arch-arrow{text-align:center;color:var(--muted);font-size:12.5px;padding:6px 0}
+.arch-arrow b{color:var(--primary-deep)}
+.arch-cloud{width:240px;border:2px dashed #9dbdd0;background:#f2f8fc;border-radius:12px;
+  padding:12px 14px;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.arch-cloud .bt{font-weight:700;color:var(--blue);font-size:13.5px}
+.arch-cloud .d{font-size:12px;color:#41739b;line-height:1.55}
+.arch-out-arrow{text-align:center;font-size:12px;color:var(--blue);padding:4px 0}
+
+/* ===== 管线流程图 ===== */
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0;padding:16px;background:#f8faf8;border:1px solid var(--line);border-radius:12px}
+.flow .node{border:2px solid var(--primary);color:var(--primary-deep);background:#fff;border-radius:10px;padding:6px 16px;font-weight:700;font-size:13.5px}
+.flow .node.gray{border-color:#aab4ab;color:var(--gray)}
+.flow .node.red{border-color:var(--red);color:var(--red)}
+.flow .node.blue{border-color:var(--blue);color:var(--blue)}
+.flow .arr{color:var(--muted);font-size:12.5px}
+.flow .arr b{color:var(--ink)}
+
+/* ===== 管线演示 ===== */
+.pipe-scen{display:flex;gap:8px;flex-wrap:wrap;margin:12px 14px 4px}
+.scen-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 16px;
+  font-size:13px;cursor:pointer;color:var(--muted)}
+.scen-chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.pipe-app{display:grid;grid-template-columns:300px 1fr;min-height:420px}
+.pipe-left{border-right:1px solid var(--line);padding:12px;display:flex;flex-direction:column}
+.pipe-q{background:#f4f8f4;border:1px solid #dfe8df;border-radius:8px;padding:8px 12px;
+  font-size:13px;margin-bottom:12px;color:#415044}
+.pipe-q b{color:var(--primary-deep)}
+.pstep{display:flex;align-items:center;gap:10px;border:1px solid transparent;border-radius:8px;
+  padding:7px 10px;margin-bottom:4px;cursor:pointer;font-size:13px;color:var(--muted)}
+.pstep:hover{background:#f4f8f4}
+.pstep.done{color:#8aa694}
+.pstep.now{border-color:var(--primary);background:var(--primary-weak);color:var(--primary-deep);font-weight:600}
+.pnum{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+  background:#e5eae5;color:var(--muted);font-size:12px;flex:none}
+.pstep.now .pnum{background:var(--primary);color:#fff}
+.pstep.done .pnum{background:#cde5d3;color:#2e7d4f}
+.pipe-right{display:flex;flex-direction:column}
+.pipe-detail{flex:1;padding:16px;overflow-y:auto;max-height:400px}
+.pipe-wait{color:var(--muted);text-align:center;padding:80px 20px;font-size:14px}
+.pd-t{font-weight:700;font-size:15px;color:var(--primary-deep);margin-bottom:6px}
+.pd-s{font-size:13.8px;color:#415044;margin-bottom:10px}
+.pd-d{background:#202b24;color:#d9e6dc;border-radius:10px;padding:14px 16px;font-size:12.8px;
+  line-height:1.7;white-space:pre-wrap;word-break:break-all;margin:0}
+.pipe-foot{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+
+footer.doc-foot{padding:30px 0 50px;color:var(--muted);font-size:13px;text-align:center}
+@media (max-width:820px){
+  .pipe-app{grid-template-columns:1fr}
+  .pipe-left{border-right:none;border-bottom:1px solid var(--line)}
+  .arch-row{flex-direction:column}
+  .arch-cloud{width:100%}
+  section.card{padding:24px 18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 头部 ================= -->
+<div class="doc-hero">
+  <div class="wrap">
+    <div class="kicker">TECHNICAL DESIGN DOCUMENT · 技术方案设计稿</div>
+    <h1>乡村智能问答系统 · 技术方案</h1>
+    <p class="sub">单机轻量架构：一台办公电脑承载"检索—生成—留痕"全链路，云端唯一外部依赖是一个 OpenAI 兼容协议的大模型 API。本方案将 PRD 的 5 项功能需求落为可实施的架构、数据模型、核心流程与部署方案。</p>
+    <div class="meta-chips">
+      <span class="meta-chip">版本 v1.0（评审稿）</span>
+      <span class="meta-chip">对应 PRD v0.2（2026-10-13）</span>
+      <span class="meta-chip">部署：单机 · 村委会办公电脑</span>
+      <span class="meta-chip">大模型：云端 API（OpenAI 兼容）</span>
+      <span class="meta-chip">日期 2026-10-13</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 目录 ================= -->
+<nav class="toc">
+  <div class="wrap">
+    <a href="#s1">1 设计原则与约束</a>
+    <a href="#s2">2 总体架构</a>
+    <a href="#s3">3 技术栈选型</a>
+    <a href="#s4">4 数据模型</a>
+    <a href="#s5">5 核心流程设计</a>
+    <a href="#s6">6 接口设计概要</a>
+    <a href="#s7">7 安全与合规</a>
+    <a href="#s8">8 部署与备份</a>
+    <a href="#s9">9 故障与降级</a>
+    <a href="#s10">10 性能与容量</a>
+    <a href="#s11">11 实施期待定项</a>
+    <a href="#s12">12 版本记录</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= 1 设计原则与约束 ================= -->
+<section class="card" id="s1">
+  <h2><span class="no">1</span>设计原则与约束</h2>
+  <p class="sec-lead">所有技术决策从这 5 条原则推导；与 PRD 的 8 项决议一一对应。</p>
+
+  <h3>1.1 设计原则</h3>
+  <table>
+    <tr><th style="width:150px">原则</th><th>含义与推导</th></tr>
+    <tr><td><b>① 零运维优先</b></td><td>部署在村委会办公电脑，无专职运维、无 DBA。选型上排除一切需要独立服务进程的组件（独立数据库、独立检索引擎），全部能力收敛进一个 Python 进程 + 一个数据库文件。</td></tr>
+    <tr><td><b>② 单机可跑</b></td><td>一台普通办公电脑（4GB 内存级别）承载全部功能；断网时除问答生成外其余功能全部可用（登录、知识库管理、记录查询均为本地能力）。</td></tr>
+    <tr><td><b>③ 防幻觉优先</b></td><td>"无来源不构成答案"是产品底线（PRD 6.1），技术上有三道闸门：提示词约束 → 结构化输出 → 服务端引用校验（见 5.3）。引用四要素由服务端从数据库读取组装，<b>不信任模型输出</b>。</td></tr>
+    <tr><td><b>④ 服务商可替换</b></td><td>大模型走 OpenAI 兼容协议（PRD 决议③：API 接入、服务商实施期定）。换服务商只改配置文件中的 base_url / api_key / model 三项，不改代码。</td></tr>
+    <tr><td><b>⑤ 失败不落库</b></td><td>问答记录只在"生成成功且校验通过"后单事务写入（PRD 6.5），任何中间失败都不产生半成品记录，不污染留痕与未答清单。</td></tr>
+  </table>
+
+  <h3>1.2 已确认的技术约束（承接 PRD）</h3>
+  <table>
+    <tr><th>约束</th><th>技术含义</th></tr>
+    <tr><td>单村试点，账号 20–50 人</td><td>并发极低（工作时段同时提问 ≤ 5 人）；数据量单村量级；无需考虑水平扩展</td></tr>
+    <tr><td>村委会办公电脑、常规网络</td><td>Windows 10/11 环境；无固定公网 IP、无域名、无 HTTPS 证书 → 局域网内 HTTP 访问 + 服务端 Session</td></tr>
+    <tr><td>大模型 API 接入云端</td><td>唯一外部依赖；问答内容经 API 出域 → 敏感拦截必须在本地、先于任何 API 调用执行</td></tr>
+    <tr><td>企业知识库级系统、轻量务实</td><td>功能上对齐知识库管理（状态机/留痕/聚合），工程上按"单进程 + 嵌入式存储"实现，不引入分布式组件</td></tr>
+    <tr><td>问答记录保留 1 年、不可删</td><td>SQLite 表仅提供 INSERT 路径；到期数据以"提示导出归档"处理（细则 TBD）</td></tr>
+    <tr><td>自建账号体系</td><td>Session + bcrypt + 登录锁定，全部本地实现，不依赖任何身份服务</td></tr>
+  </table>
+</section>
+
+<!-- ================= 2 总体架构 ================= -->
+<section class="card" id="s2">
+  <h2><span class="no">2</span>总体架构</h2>
+  <p class="sec-lead">一个 Python 进程、一个数据库文件、一个云端大模型 API —— 拓扑极简，故障域清晰。</p>
+
+  <h3>2.1 架构图</h3>
+  <div class="arch">
+    <span class="arch-tag">村委会办公电脑（Windows 10/11 · 常驻 Windows 服务）</span>
+    <div class="arch-row">
+      <div class="arch-main">
+        <div class="arch-box">
+          <div class="bt">接入层 · 浏览器（Chrome / Edge）</div>
+          <div class="arch-nodes">
+            <span class="arch-node">问答工作台</span>
+            <span class="arch-node">问答记录</span>
+            <span class="arch-node">知识库管理（管理员）</span>
+            <span class="arch-node">未答问题（管理员）</span>
+            <span class="arch-node">账号管理（管理员）</span>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ HTTP（局域网 / localhost · Session Cookie）</div>
+        <div class="arch-box">
+          <div class="bt">应用层 · FastAPI 单进程（Uvicorn · NSSM 托管开机自启、崩溃自动重启）</div>
+          <div class="arch-nodes">
+            <span class="arch-node">Jinja2 页面渲染</span>
+            <span class="arch-node">REST API 路由</span>
+            <span class="arch-node">Session 认证与锁定</span>
+            <span class="arch-node"><b>问答管线服务</b>（敏感拦截 → 混合检索 → Prompt 组装 → 生成 → 引用校验）</span>
+            <span class="arch-node">知识库 / 未答问题 / 账号服务</span>
+            <span class="arch-node">APScheduler 定时任务（到期下线 / 备份 / 清理）</span>
+          </div>
+        </div>
+        <div class="arch-arrow">↓ SQLAlchemy（WAL 模式 · 短事务）</div>
+        <div class="arch-box">
+          <div class="bt">数据层 · SQLite 单文件 app.db（文件即备份）</div>
+          <div class="arch-nodes">
+            <span class="arch-node">业务表（账号 / 条目 / 记录 / 未答问题 / 留痕 / 会话）</span>
+            <span class="arch-node">FTS5 全文索引（jieba 分词 · 关键词检索）</span>
+            <span class="arch-node">sqlite-vec 向量索引（语义检索）</span>
+            <span class="arch-node dim">每日备份文件（30 份滚动）</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-cloud">
+        <div class="arch-out-arrow">HTTPS ↑ 唯一外联 ↗</div>
+        <div class="bt">云端 · 大模型 API（OpenAI 兼容协议）</div>
+        <div class="d">chat completions（答案生成）<br>+ embeddings（问题/条目向量化）</div>
+        <div class="d">服务商实施期定（须已完成算法备案、签数据协议）；断网时仅问答生成不可用，其余功能不受影响</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>2.2 组件职责说明</h3>
+  <table>
+    <tr><th style="width:170px">组件</th><th>职责</th><th style="width:220px">对应 PRD 需求</th></tr>
+    <tr><td><b>问答管线服务</b></td><td>系统核心。串起敏感拦截、混合检索、Prompt 组装、LLM 调用、引用校验、落库六个环节；对外只有一个同步入口 <code>POST /api/ask</code></td><td>FR-01 全部规则；6.1 / 6.2 / 6.5</td></tr>
+    <tr><td>知识库服务</td><td>条目 CRUD、状态机流转、发布/下线、标题唯一与相似提示、留痕写入</td><td>FR-03</td></tr>
+    <tr><td>未答问题服务</td><td>未命中记录 → 聚合组、手动拆分、关闭、与新条目发布后的双向关联</td><td>FR-04</td></tr>
+    <tr><td>账号服务</td><td>账号创建/停用/重置密码、首次改密、失败锁定</td><td>FR-05</td></tr>
+    <tr><td>留痕服务</td><td>统一 append-only 写入 operation_logs，所有写操作复用</td><td>6.4</td></tr>
+    <tr><td>APScheduler</td><td>条目到期自动下线（每小时）、备份（每日）、会话清理、1 年保留检查</td><td>FR-03 有效期规则；6.4</td></tr>
+    <tr><td>检索层（FTS5 + sqlite-vec）</td><td>关键词与语义双路召回，RRF 融合排序；查询时强制过滤 <code>status='published' 且未过期</code></td><td>FR-01 规则 1</td></tr>
+    <tr><td>LLM 客户端（httpx）</td><td>OpenAI 兼容调用，超时/重试/降级封装；是唯一出域通道</td><td>约束：大模型 API 接入</td></tr>
+  </table>
+
+  <h3>2.3 关键架构决策记录（ADR 摘要）</h3>
+  <table>
+    <tr><th>#</th><th>决策</th><th>理由</th><th>被否方案</th></tr>
+    <tr><td>ADR-1</td><td>同步等待 LLM 返回，不做 SSE / WebSocket / 轮询</td><td>生成耗时 2–8s，一次 HTTP 请求等待（客户端超时 30s）即可；少一套任务队列与状态机，故障面小</td><td>异步任务 + 轮询（复杂度不匹配单村量级）</td></tr>
+    <tr><td>ADR-2</td><td>敏感拦截为管线第一步，本地正则执行，先于一切 API 调用</td><td>敏感内容不得出域（合规强约束），且省 API 调用；本地执行无网络依赖</td><td>交给 LLM 判断（内容已出域，且不可控）</td></tr>
+    <tr><td>ADR-3</td><td>引用四要素由服务端从数据库组装，LLM 只产出"答案正文 + 引用条目 ID"</td><td>来源信息（文件名/单位/时间）是信任核心，不能让模型复述（可能改写、编造）</td><td>让 LLM 输出完整引用卡片（存在幻觉改写风险）</td></tr>
+    <tr><td>ADR-4</td><td>查询层双保险过滤条目状态（status=published 且 expire_date 未到），到期下线定时任务仅做状态标记</td><td>即使定时任务漏跑，过期内容也不会被检索引用——防幻觉底线不依赖单一定时器</td><td>仅靠定时任务下线（有时效风险）</td></tr>
+    <tr><td>ADR-5</td><td>不引入 LangChain / LlamaIndex 等编排框架</td><td>本场景管线只有 6 步、无 Agent/工具调用/多轮规划需求，httpx 直连 200 行内解决；框架引入版本动荡与调试黑盒</td><td>LangChain（抽象层收益 &lt; 维护成本）</td></tr>
+    <tr><td>ADR-6</td><td>Docker 不作为首选交付方式</td><td>办公电脑多为 Windows 家庭版（无 Hyper-V），且村委会无人维护容器；NSSM 原生服务 + venv 更贴合现实</td><td>Docker Desktop（环境门槛高）</td></tr>
+  </table>
+</section>
+
+<!-- ================= 3 技术栈选型 ================= -->
+<section class="card" id="s3">
+  <h2><span class="no">3</span>技术栈选型</h2>
+  <p class="sec-lead">总原则：成熟稳定、零运维、可替换。每一层给出选型、理由与被否备选。</p>
+
+  <h3>3.1 选型总表</h3>
+  <table>
+    <tr><th style="width:130px">分层</th><th style="width:230px">选型</th><th>选型理由</th><th style="width:260px">备选方案与不选原因</th></tr>
+    <tr>
+      <td><b>语言 / 运行时</b></td>
+      <td><b>Python 3.12+</b></td>
+      <td>LLM / 检索 / NLP 生态最全（httpx、jieba、bcrypt 均一行安装）；开发效率高，适合村级项目的单人可维护性</td>
+      <td>Node.js（生态够用但中文分词与本地检索生态弱）；Go（运维友好但开发慢，LLM 生态不成熟）</td>
+    </tr>
+    <tr>
+      <td><b>Web 框架</b></td>
+      <td><b>FastAPI + Uvicorn</b></td>
+      <td>原生 async——问答请求要等待外部 LLM API 数秒，异步不阻塞其他用户；Pydantic 自带请求校验与 OpenAPI 文档；社区活跃、文档完善</td>
+      <td>Flask（同步模型下 LLM 等待会占满 worker）；Django（自带 Admin/ORM 但体量与学习成本超出本项目需要）</td>
+    </tr>
+    <tr>
+      <td><b>模板 / 前端</b></td>
+      <td><b>Jinja2 服务端渲染 + 原生 JS / CSS</b>（无构建步骤）</td>
+      <td>20–50 名用户的管理台无需 SPA；无 node_modules / 无打包链，办公电脑上改一行页面即生效；表单校验、列表筛选用原生 JS 足够</td>
+      <td>Vue / React SPA（需 Node 构建工具链，交付与维护成本翻倍，对 5 个页面的系统得不偿失）</td>
+    </tr>
+    <tr>
+      <td><b>数据库</b></td>
+      <td><b>SQLite（WAL 模式）+ SQLAlchemy 2.x</b></td>
+      <td>零安装、零守护进程、<b>单文件即完整备份</b>；本场景写少读多、并发 ≤5，WAL 模式完全胜任；SQLAlchemy 统一数据访问并为将来换库留门</td>
+      <td>MySQL / PostgreSQL（需安装并维护独立服务，违背零运维原则；单村量级用不到其网络并发能力）</td>
+    </tr>
+    <tr>
+      <td><b>关键词检索</b></td>
+      <td><b>SQLite FTS5 + jieba 分词</b></td>
+      <td>FTS5 是 SQLite 内建虚拟表，零额外组件；jieba 纯 Python 实现中文分词，入库与查询共用同一分词器保证一致</td>
+      <td>Elasticsearch（JVM 常驻内存 1GB+，办公电脑吃不消）；Like 模糊查询（无分词能力，召回差）</td>
+    </tr>
+    <tr>
+      <td><b>向量检索</b></td>
+      <td><b>sqlite-vec</b>（SQLite 向量扩展）</td>
+      <td>与业务库同文件、同进程，条目发布与向量更新在一个事务里；百级条目暴力扫描毫秒级返回；不引入独立向量库</td>
+      <td>Chroma（可接受但多一套存储文件）；FAISS（无元数据管理，偏研究用途）；pgvector（连带引入 PostgreSQL）</td>
+    </tr>
+    <tr>
+      <td><b>Embedding</b></td>
+      <td><b>大模型 API 的 embeddings 接口</b>（OpenAI 兼容）</td>
+      <td>与生成模型同协议，httpx 客户端复用；问题与条目共用同一 embedding 模型保证相似度可比较</td>
+      <td>本地 bge/m3e 模型（免 API 费用但需 CPU 推理与模型下载，办公电脑负载与维护成本高；列为备选降级方案）</td>
+    </tr>
+    <tr>
+      <td><b>大模型（生成）</b></td>
+      <td><b>OpenAI 兼容协议的国内合规大模型 API</b>（候选：智谱 GLM / 通义千问 / DeepSeek 等，实施期完成合规评估与数据协议后确定）</td>
+      <td>OpenAI 兼容已是事实标准：换服务商只改 .env 三个字段；国内头部厂商均已完成生成式算法备案，满足"合规服务商"约束</td>
+      <td>本地开源模型（违背"API 接入"决议且办公电脑无 GPU）；直接绑死单一厂商 SDK（失去可替换性）</td>
+    </tr>
+    <tr>
+      <td><b>LLM 客户端</b></td>
+      <td><b>httpx（异步）直连</b></td>
+      <td>OpenAI 兼容协议就是普通 REST，超时/重试/降级逻辑自己写 200 行，完全可控、可调试</td>
+      <td>LangChain / LlamaIndex（见 ADR-5）；openai 官方 SDK（可用，但对"部分兼容"的国内网关偶有版本坑，httpx 最稳）</td>
+    </tr>
+    <tr>
+      <td><b>认证 / 会话</b></td>
+      <td><b>服务端 Session 表 + HttpOnly Cookie（SameSite=Lax）+ bcrypt</b></td>
+      <td>自建账号（决议⑧）+ 单机 Web 场景，Session 是最简模型；bcrypt 是密码哈希事实标准；服务端会话可主动失效（锁定/停用即时生效）</td>
+      <td>JWT（无状态令牌无法即时吊销，锁定/停用语义麻烦，对本场景是负资产）</td>
+    </tr>
+    <tr>
+      <td><b>定时任务</b></td>
+      <td><b>APScheduler（进程内）</b></td>
+      <td>与服务同进程同数据库，不存在"任务跑着服务停了"的状态不同步；四行代码注册任务</td>
+      <td>Windows 任务计划 + 独立脚本（多一套部署物，与服务状态脱节）</td>
+    </tr>
+    <tr>
+      <td><b>进程常驻</b></td>
+      <td><b>NSSM 注册 Windows 服务</b></td>
+      <td>开机自启、崩溃自动重启、以服务方式运行不依赖登录会话；村委会"重启电脑系统自己回来"</td>
+      <td>计划任务启动（重启策略弱）；Docker（见 ADR-6）</td>
+    </tr>
+    <tr>
+      <td><b>配置管理</b></td>
+      <td><b>pydantic-settings + .env 文件</b></td>
+      <td>API 密钥与阈值参数（相关性/聚合/超时）集中一处、类型校验、改动重启即生效</td>
+      <td>配置写死代码（改阈值要发版）；数据库配置表（改动即时但密钥入库不安全）</td>
+    </tr>
+    <tr>
+      <td><b>备份</b></td>
+      <td><b>Python 脚本（sqlite3 backup API）+ Windows 任务计划每日复制</b></td>
+      <td>SQLite 官方在线备份接口保证副本一致性（比直接复制文件可靠）；保留 30 天滚动</td>
+      <td>仅人工拷贝（依赖自觉，不可靠）</td>
+    </tr>
+    <tr>
+      <td><b>日志</b></td>
+      <td><b>标准库 logging + 按大小滚动</b></td>
+      <td>应用日志 / 访问日志落文件，磁盘自保护</td>
+      <td>ELK 等（体量完全不匹配）</td>
+    </tr>
+  </table>
+
+  <h3>3.2 技术栈全景一览（一图速览）</h3>
+  <div class="flow">
+    <span class="node">Python 3.12</span><span class="arr">→</span>
+    <span class="node">FastAPI + Uvicorn</span><span class="arr">→</span>
+    <span class="node">Jinja2 + 原生 JS</span><span class="arr">→</span>
+    <span class="node">SQLAlchemy + SQLite(WAL)</span><span class="arr">→</span>
+    <span class="node">FTS5 + jieba</span><span class="arr">+</span>
+    <span class="node">sqlite-vec</span><span class="arr">→</span>
+    <span class="node blue">大模型 API（OpenAI 兼容）</span><span class="arr">→</span>
+    <span class="node">APScheduler</span><span class="arr">→</span>
+    <span class="node">NSSM 常驻</span>
+  </div>
+  <div class="note">全部组件均为 <b>pip 可安装的开源组件</b>（NSSM 为单 exe 绿色工具），无商用授权费用；唯一按量付费项为大模型 API 调用（费用与提问量线性相关，量级可控）。</div>
+</section>
+
+<!-- ================= 4 数据模型 ================= -->
+<section class="card" id="s4">
+  <h2><span class="no">4</span>数据模型</h2>
+  <p class="sec-lead">8 张业务表 + 2 组内置数据表。列核心字段与约束，类型按 SQLite 习惯标注。</p>
+
+  <h3>4.1 表关系总览</h3>
+  <div class="flow">
+    <span class="node">users 用户</span>
+    <span class="arr">1 ─ N →</span><span class="node">qa_records 问答记录</span>
+    <span class="arr">未命中时 1 ─ 1 →</span><span class="node">unanswered_items 问题实例</span>
+    <span class="arr">N ─ 1 →</span><span class="node">unanswered_groups 聚合组</span>
+  </div>
+  <div class="flow">
+    <span class="node">kb_entries 知识条目</span>
+    <span class="arr">发布→自动双向关联→</span><span class="node">unanswered_groups</span>
+    <span class="arr">被引用于（cited_entry_ids JSON）→</span><span class="node">qa_records</span>
+  </div>
+  <div class="flow">
+    <span class="node gray">operation_logs 留痕（append-only，全表只写不改不删）</span>
+    <span class="arr">·</span>
+    <span class="node gray">sessions 会话 · kb_vectors 条目向量 · sensitive_rules 敏感规则 · referral_map 转办映射</span>
+  </div>
+
+  <h3>4.2 users 账号表（FR-05）</h3>
+  <table>
+    <tr><th>字段</th><th style="width:130px">类型</th><th>约束与说明</th></tr>
+    <tr><td>id</td><td>INTEGER PK</td><td>自增</td></tr>
+    <tr><td>username</td><td>TEXT</td><td>UNIQUE NOT NULL，登录账号</td></tr>
+    <tr><td>display_name</td><td>TEXT</td><td>NOT NULL，姓名（留痕展示用）</td></tr>
+    <tr><td>org_label</td><td>TEXT</td><td>所属村/部门，仅展示（本期单组织无组织树）</td></tr>
+    <tr><td>role</td><td>TEXT</td><td>CHECK IN ('staff','admin')</td></tr>
+    <tr><td>password_hash</td><td>TEXT</td><td>bcrypt（cost=12），不存明文</td></tr>
+    <tr><td>must_change_password</td><td>INTEGER</td><td>默认 1；首次登录改密后置 0，改密前仅可访问改密页</td></tr>
+    <tr><td>failed_attempts / locked_until</td><td>INTEGER / TEXT</td><td>连续 5 次失败 → locked_until = now + 15 分钟；成功登录清零</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>'active' / 'disabled'（停用后记录保留，登录拒绝）</td></tr>
+    <tr><td>created_by / created_at / updated_at</td><td>INTEGER FK / 时间</td><td>创建人、时间戳（留痕）</td></tr>
+  </table>
+
+  <h3>4.3 kb_entries 知识条目表（FR-03）</h3>
+  <table>
+    <tr><th>字段</th><th style="width:130px">类型</th><th>约束与说明</th></tr>
+    <tr><td>id</td><td>INTEGER PK</td><td>自增</td></tr>
+    <tr><td>title</td><td>TEXT</td><td><b>UNIQUE NOT NULL</b>（DB 层兜底标题全局唯一）</td></tr>
+    <tr><td>category</td><td>TEXT</td><td>CHECK IN ('办事流程','惠民政策','村务公开','生活服务')</td></tr>
+    <tr><td>content</td><td>TEXT</td><td>NOT NULL，正文（分点口径）</td></tr>
+    <tr><td>basis_file</td><td>TEXT</td><td>NOT NULL，依据文件名（含文号如有）——无依据不入库</td></tr>
+    <tr><td>publish_org</td><td>TEXT</td><td>NOT NULL，发文机关</td></tr>
+    <tr><td>expire_date</td><td>DATE</td><td>可空；到期自动下线</td></tr>
+    <tr><td>tags</td><td>TEXT</td><td>JSON 数组，检索辅助</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>CHECK IN ('draft','published','offline','expired')</td></tr>
+    <tr><td>last_verified_at</td><td>时间</td><td>每次编辑保存时刷新（引用卡"最后核实时间"来源）</td></tr>
+    <tr><td>offline_reason</td><td>TEXT</td><td>下线原因（预设选项+补充说明，留痕展示）</td></tr>
+    <tr><td>created_by/at · updated_by/at</td><td>FK / 时间</td><td>操作人与时间（留痕）</td></tr>
+  </table>
+  <div class="note small">配套索引：<b>kb_vectors</b>（entry_id FK · embedding BLOB · model TEXT · updated_at）供语义检索；<b>kb_fts</b>（FTS5 虚拟表）存 jieba 分词后的标题+正文，供关键词检索。两者在条目发布/编辑的同一事务内更新；查询层恒定过滤 <code>status='published' AND (expire_date IS NULL OR expire_date &gt; 当前日期)</code>（ADR-4 双保险）。</div>
+
+  <h3>4.4 qa_records 问答记录表（FR-01 / FR-02）</h3>
+  <table>
+    <tr><th>字段</th><th style="width:130px">类型</th><th>约束与说明</th></tr>
+    <tr><td>id</td><td>INTEGER PK</td><td>自增</td></tr>
+    <tr><td>user_id</td><td>INTEGER FK</td><td>提问人（可见性：本人 + 管理员）</td></tr>
+    <tr><td>question</td><td>TEXT</td><td>NOT NULL，≤500 字（服务端校验兜底）</td></tr>
+    <tr><td>answer</td><td>TEXT</td><td>可空；仅 status='answered' 有值</td></tr>
+    <tr><td>status</td><td>TEXT</td><td>CHECK IN ('answered','missed','out_of_scope') → 已回答 / 未命中 / 超出范围</td></tr>
+    <tr><td>cited_entry_ids</td><td>TEXT</td><td>JSON 数组，引用条目 ID（服务端校验后写入）</td></tr>
+    <tr><td>degraded</td><td>INTEGER</td><td>1 = 本次检索走了降级（embedding 不可用，纯关键词），复盘用</td></tr>
+    <tr><td>feedback / feedback_at</td><td>TEXT / 时间</td><td>'none' / 'useful' / 'useless'；仅 answered 可评，可改，仅本人可评</td></tr>
+    <tr><td>created_at</td><td>时间</td><td>索引 (user_id, created_at) 支撑记录页倒序；保留 1 年（6.4）</td></tr>
+  </table>
+  <div class="note small">应用层不提供 UPDATE / DELETE 接口（除 feedback 字段），满足"记录不可删改"。敏感类记录同样落本表（status='out_of_scope'），<b>不生成</b> unanswered_items —— 敏感不进未答清单。</div>
+
+  <h3>4.5 unanswered_groups / unanswered_items 未答问题（FR-04）</h3>
+  <p><b>设计要点：以"组"为管理单元（PRD 列表中的"未答问题"），组内挂载具体"问题实例"（每次未命中各生成一条），天然支持聚合计数与管理员手动拆分。</b></p>
+  <table>
+    <tr><th>表</th><th>字段</th><th>说明</th></tr>
+    <tr>
+      <td rowspan="7"><b>unanswered_groups</b><br>聚合组</td>
+      <td>id PK</td><td>组 ID</td>
+    </tr>
+    <tr><td>representative_question</td><td>代表问题文本（取组内首个问题）</td></tr>
+    <tr><td>question_count</td><td>聚合计数（= 组内 items 数）</td></tr>
+    <tr><td>status</td><td>'pending' / 'supplemented' / 'closed' → 待处理 / 已补充 / 已关闭</td></tr>
+    <tr><td>related_entry_id</td><td>FK kb_entries，可空——新条目发布后自动回填，<b>双向关联</b>（条目侧可反查"由哪个未答问题补充而来"）</td></tr>
+    <tr><td>close_reason</td><td>关闭原因，<b>关闭时必填</b>（预设选项+说明）</td></tr>
+    <tr><td>first/last_asked_at · handled_by/at</td><td>首末次发生时间、处理人/时间</td></tr>
+    <tr>
+      <td rowspan="4"><b>unanswered_items</b><br>问题实例</td>
+      <td>id PK</td><td>实例 ID</td>
+    </tr>
+    <tr><td>group_id FK</td><td>所属组（手动拆分 = 把 item 移到新组）</td></tr>
+    <tr><td>question / qa_record_id</td><td>原始问题文本、来源记录 FK（回溯）</td></tr>
+    <tr><td>embedding / created_at</td><td>问题向量（聚合计算用）、发生时间</td></tr>
+  </table>
+
+  <h3>4.6 operation_logs 操作留痕表（6.4）</h3>
+  <table>
+    <tr><th>字段</th><th style="width:130px">类型</th><th>说明</th></tr>
+    <tr><td>id · operator_id · operator_name</td><td>PK / FK / TEXT</td><td>操作人 ID + <b>姓名冗余</b>（账号停用后留痕仍可读）</td></tr>
+    <tr><td>action</td><td>TEXT</td><td>动作枚举（见下）</td></tr>
+    <tr><td>object_type · object_id</td><td>TEXT / INTEGER</td><td>对象类型与 ID（kb_entry / qa_record / user / unanswered_group …）</td></tr>
+    <tr><td>detail</td><td>TEXT</td><td>JSON（如：下线原因、关闭原因、变更摘要）</td></tr>
+    <tr><td>created_at</td><td>时间</td><td>操作时间</td></tr>
+  </table>
+  <p>动作枚举：<code>login_success / password_change / account_create / account_disable / password_reset / kb_create / kb_edit / kb_publish / kb_offline / unanswered_close / unanswered_split / record_feedback</code>。应用层 append-only；表上建 UPDATE/DELETE 触发器直接 RAISE，作为最后一道防线。</p>
+
+  <h3>4.7 sessions 会话表 与 内置数据表</h3>
+  <ul>
+    <li><b>sessions</b>：session_id（32B 随机）· user_id FK · expires_at（7 天滑动续期）· created_at。登出即删行；停用/锁定即时生效（每次请求校验用户状态）。</li>
+    <li><b>sensitive_rules 敏感规则</b>（P0 内置 4 类，存表便于留痕展示，P1 开放维护的伏笔）：name（涉法涉诉/医疗诊断/信访举报/涉资金个人决策）· patterns（正则 JSON 数组）· advice（建议渠道文案）。</li>
+    <li><b>referral_map 转办映射</b>：category → 建议部门 + 文案（实施期由管理方确认，见 PRD 6.2 TBD）。以初始化数据形式插入，改表不发版。</li>
+  </ul>
+</section>
+
+<!-- ================= 5 核心流程设计 ================= -->
+<section class="card" id="s5">
+  <h2><span class="no">5</span>核心流程设计</h2>
+  <p class="sec-lead">问答管线是系统心脏：一次提问最多经历 6 个环节，任何环节失败都有明确出口，不留半成品。</p>
+
+  <h3>5.1 问答管线总览（FR-01）</h3>
+  <div class="flow">
+    <span class="node">① 提交校验</span><span class="arr">→</span>
+    <span class="node red">② 敏感拦截（本地）</span><span class="arr">命中→</span>
+    <span class="node gray">拦截卡片 + 落库"超出范围"</span>
+  </div>
+  <div class="flow">
+    <span class="arr">②放行→</span>
+    <span class="node">③ 混合检索（FTS5 + 向量）</span><span class="arr">→</span>
+    <span class="node">④ 相关性判定</span><span class="arr">高相关→</span>
+    <span class="node">⑤ Prompt 组装 → ⑥ LLM 生成 → ⑦ 引用校验</span>
+  </div>
+  <div class="flow">
+    <span class="arr">④不足→</span>
+    <span class="node blue">兜底卡片（相关条目≤3 + 转办建议）→ 落库"未命中" → 未答问题聚合</span>
+    <span class="arr">·</span>
+    <span class="arr">⑦通过→</span><span class="node">答案卡片 + 落库"已回答"</span>
+    <span class="arr">·</span>
+    <span class="node gray">⑦失败/⑥超时 → 重试按钮，不落库</span>
+  </div>
+
+  <h4>交互演示（技术管线步进模拟）</h4>
+  <div class="win">
+    <div class="win-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="win-title">demo-T1 · 问答管线步进模拟器：命中 / 未命中 / 敏感拦截 三条路径逐环节走一遍</span></div>
+    <div class="win-note">⚠ 演示环境：检索分数、相似度、模型输出均为虚构示例，用于评审管线设计，不代表真实参数。</div>
+    <div class="pipe-scen" id="pipeScens"></div>
+    <div class="pipe-app">
+      <div class="pipe-left">
+        <div class="pipe-q" id="pipeQ"></div>
+        <div id="pipeList"></div>
+      </div>
+      <div class="pipe-right">
+        <div class="pipe-detail" id="pipeDetail"><div class="pipe-wait">选择场景后点击"开始"，逐环节查看每一步的输入 / 判定 / 输出</div></div>
+        <div class="pipe-foot">
+          <button class="btn sm" id="pipePrev">← 上一环节</button>
+          <button class="btn primary sm" id="pipeNext">下一环节 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>5.2 各环节技术规则</h3>
+  <h4>① 提交与校验</h4>
+  <ul>
+    <li>服务端复验：非空、去首尾空白、≤500 字（前端 maxlength + 后端双保险）；未登录 401；被锁定/停用 403。</li>
+    <li>知识库为空（无已发布条目）：<b>跳过③④⑤⑥⑦，直达未命中兜底</b>（PRD：空态提问照常受理，未答照常记录）。</li>
+  </ul>
+  <h4>② 敏感拦截（本地，先于一切 API 调用 —— ADR-2）</h4>
+  <ul>
+    <li>加载 sensitive_rules 全部正则（4 类 × 若干关键词，内存缓存，规则变更时刷新）；正则逐条匹配问题文本。</li>
+    <li>命中 → 组装拦截卡片（类别对应建议渠道 + "不构成专业意见"提示）→ 单事务落库 status='out_of_scope'（记录命中类别）→ <b>不生成</b>未答问题 → 流程结束。问题文本<b>不出域</b>。</li>
+  </ul>
+  <h4>③ 混合检索</h4>
+  <ul>
+    <li><b>双路召回</b>：FTS5 关键词检索（问题 jieba 分词 → MATCH 查询）+ 语义检索（问题 embedding → sqlite-vec 与已发布条目向量算余弦相似度）。</li>
+    <li><b>RRF 融合</b>（k=60）合并两路结果取 Top 5；embedding API 调用失败 → 降级为纯关键词召回，记录标 degraded=1。</li>
+    <li>候选集恒为"已发布且未过期"条目（ADR-4）；草稿 / 已下线 / 已过期条目物理上仍在索引中，但被查询条件排除——下线即时生效，无缓存一致性问题。</li>
+  </ul>
+  <h4>④ 相关性判定</h4>
+  <ul>
+    <li>Top 1 向量相似度 ≥ 阈值 <b>T1（初始 0.75，.env 可调）</b>，或 FTS 明确命中（标题/标签强匹配）→ 判定"高相关"进入生成；否则走未命中兜底。</li>
+    <li>无候选 / 全部低分 → 未命中。<b>"依据不足"属于正常业务结果，照常落库</b>（区别于技术失败，见 5.4）。</li>
+  </ul>
+  <h4>⑤ Prompt 组装 + ⑥ LLM 生成</h4>
+  <ul>
+    <li>组装模板见 5.3；httpx 异步调用，connect 5s / read 30s 超时，5xx/网络错误自动重试 1 次（退避 2s）。</li>
+    <li>要求 JSON 输出（服务商支持 response_format=json_object 则启用，否则提示词约束 + 解析容错）。</li>
+  </ul>
+  <h4>⑦ 引用校验（防幻觉闸门）</h4>
+  <ul>
+    <li><b>校验 1</b>：模型返回的 cited_ids ⊆ 本次提供的条目 ID 集合，否则视为生成失败。</li>
+    <li><b>校验 2</b>：sufficient=false 或答案为空 → 转未命中兜底（模型自认依据不足，尊重其判断）。</li>
+    <li><b>组装 3</b>（ADR-3）：答案卡片四要素由服务端按 cited_ids 从 kb_entries 读取；时效提示行由 last_verified_at 组装。模型输出的正文以外内容一律丢弃。</li>
+  </ul>
+  <h4>⑧ 落库与返回</h4>
+  <ul>
+    <li>生成成功且校验通过 → <b>单事务</b>写入 qa_records（status='answered', answer, cited_entry_ids）→ 返回答案卡片。</li>
+    <li>未命中 → 单事务写入 status='missed' + 同事务生成 unanswered_item 并聚合（见 5.5）→ 返回兜底卡片。</li>
+    <li>敏感 → 落库 status='out_of_scope' → 返回拦截卡片。</li>
+  </ul>
+
+  <h3>5.3 Prompt 模板与结构化输出</h3>
+  <pre><b># System（要点摘录）</b>
+你是村务政策问答助手，服务基层工作人员。
+规则：
+1. 仅依据 &lt;知识条目&gt; 提供的内容作答，禁止使用条目以外的知识；
+2. 条目内容不足以可靠回答时，必须将 sufficient 置为 false，并停止作答；
+3. 答案分点、直接回应问题、口径供工作人员向村民复述；
+4. 只输出 JSON：{"answer": "...", "cited_ids": [条目id...], "sufficient": true|false}
+
+<b># User（组装后）</b>
+问题：{question}
+&lt;知识条目 id=12&gt;
+标题：最低生活保障申请指南
+正文：{条目正文}
+&lt;/知识条目&gt;
+（…Top 3 条目，第 4-5 名低相关条目丢弃不送，减少干扰）
+
+<b># 期望输出（服务端解析）</b>
+{"answer":"申请低保一般需准备：① 书面申请书…","cited_ids":[12],"sufficient":true}</pre>
+  <div class="note">防幻觉三道闸：① 提示词硬约束"仅依据条目"；② 结构化 JSON 便于机器校验；③ 服务端校验引用 ID 合法性并以数据库组装四要素。三道闸任何一道不通过，都不产生"已回答"记录。</div>
+
+  <h3>5.4 失败语义区分（PRD 6.5 的技术落地）</h3>
+  <table>
+    <tr><th>情形</th><th>性质</th><th>处理</th><th>是否落库</th></tr>
+    <tr><td>依据不足 / 无高相关条目</td><td><b>业务结果</b></td><td>走未命中兜底，进入未答清单</td><td>是（missed）</td></tr>
+    <tr><td>敏感命中</td><td>业务结果</td><td>拦截卡片 + 建议渠道</td><td>是（out_of_scope）</td></tr>
+    <tr><td>LLM 超时 / 5xx / 解析失败 / 引用 ID 非法</td><td><b>技术失败</b></td><td>自动重试 1 次 → 仍失败返回"生成失败，请重试"（HTTP 503, retryable）</td><td><b>否</b>——重试成功才落库，无半成品</td></tr>
+    <tr><td>embedding 失败</td><td>技术降级</td><td>自动降级纯关键词检索继续作答，记录标 degraded</td><td>是（标 degraded=1）</td></tr>
+  </table>
+
+  <h3>5.5 未答问题聚合与手动拆分（FR-04）</h3>
+  <h4>聚合算法（单村量级从简，可解释优先）</h4>
+  <ol>
+    <li>未命中落库同事务内：计算问题 embedding，生成 unanswered_item；</li>
+    <li>遍历所有 <code>status='pending'</code> 的组：新问题向量与<b>组内全部 item 向量</b>求平均余弦相似度；</li>
+    <li>最大平均相似度 ≥ 阈值 <b>T2（初始 0.82）</b> → 并入该组（question_count+1，last_asked_at 刷新）；否则新建组（代表问题 = 该问题，count=1）；</li>
+    <li>关闭/已补充的组不再参与聚合（闭环后的相似新问题会生成新组，符合"补充后再问直接命中"预期）。</li>
+  </ol>
+  <h4>手动拆分</h4>
+  <ul>
+    <li>组详情页展示全部成员问题；管理员勾选误聚合的问题 → 确认拆分 → 选中 items 移入新组（代表问题取首个，各自独立计数），原组 count 相应减少；</li>
+    <li>拆分、并入均写 operation_logs（action=unanswered_split）留痕。</li>
+  </ul>
+  <h4>发布闭环（自动双向关联）</h4>
+  <ul>
+    <li>管理员从组点"去补充"→ 跳转新增条目表单（带入组 ID 与问题作参考）；</li>
+    <li>该条目<b>发布事务</b>内：回查来源组 → 组 status='supplemented'，related_entry_id=新条目 ID（双向关联完成）——不依赖额外定时任务，发布即闭环。</li>
+  </ul>
+
+  <h3>5.6 条目状态机与到期自动下线（FR-03）</h3>
+  <div class="flow">
+    <span class="node gray">draft 草稿</span><span class="arr">—发布→</span>
+    <span class="node">published 已发布</span><span class="arr">—手动下线(原因必填)→</span>
+    <span class="node gray">offline 已下线</span><span class="arr">—重新发布→</span>
+    <span class="node">published</span>
+  </div>
+  <div class="flow">
+    <span class="node">published</span><span class="arr">—定时任务: expire_date ≤ 今日→</span>
+    <span class="node red">expired 已过期</span><span class="arr">—编辑更新后重新发布→</span>
+    <span class="node">published</span>
+  </div>
+  <ul>
+    <li><b>编辑不改状态</b>：published 条目保存后仍 published，刷新 last_verified_at，写留痕（kb_edit）。</li>
+    <li><b>到期下线</b>：APScheduler 每小时扫描 <code>status='published' AND expire_date ≤ 今日</code> → 置 expired + 留痕；<b>双保险</b>：检索查询条件独立过滤过期条目（ADR-4），定时器漏跑零影响。</li>
+    <li><b>标题唯一</b>：DB UNIQUE 约束兜底；新增/编辑保存时对标题做 embedding 与已发布条目标题比对，相似度 ≥ T3（初始 0.85）→ 前端提示"是否为原条目的更新版本"，引导编辑原条目。</li>
+    <li><b>即时生效</b>：发布/下线事务内同步更新 FTS 与向量表，无缓存层，发布后下一次提问即生效。</li>
+  </ul>
+
+  <h3>5.7 定时任务清单（APScheduler）</h3>
+  <table>
+    <tr><th>任务</th><th>频率</th><th>动作</th><th>对应需求</th></tr>
+    <tr><td>条目到期下线</td><td>每小时 :00</td><td>published 且过期 → expired + 留痕</td><td>FR-03 规则 5</td></tr>
+    <tr><td>数据库备份</td><td>每日 03:00</td><td>WAL checkpoint → sqlite3 backup API 复制 → 备份目录滚动保留 30 份</td><td>运维（8.2）</td></tr>
+    <tr><td>会话清理</td><td>每日 02:00</td><td>删除过期 sessions</td><td>安全</td></tr>
+    <tr><td>记录保留检查</td><td>每日 02:30</td><td>扫描超 1 年记录 → 管理端提示"可导出归档"（P0 只提示不删除，处置细则 TBD）</td><td>6.4</td></tr>
+  </table>
+</section>
+
+<!-- ================= 6 接口设计概要 ================= -->
+<section class="card" id="s6">
+  <h2><span class="no">6</span>接口设计概要</h2>
+  <p class="sec-lead">页面（Jinja2 渲染）+ JSON API 两类。写操作均为 POST/PUT + Session 认证，无公开匿名接口。</p>
+
+  <h3>6.1 页面路由（GET，未登录一律跳 /login）</h3>
+  <table>
+    <tr><th>路径</th><th>说明</th><th>权限</th></tr>
+    <tr><td>/login · /change-password</td><td>登录、首次/强制改密（must_change_password=1 时其余页面全部拦截）</td><td>匿名 / 登录</td></tr>
+    <tr><td>/</td><td>问答工作台（提问、答案卡片、反馈、我的记录侧栏）</td><td>工作人员 + 管理员</td></tr>
+    <tr><td>/records</td><td>我的问答记录（倒序、状态筛选、详情）</td><td>本人记录</td></tr>
+    <tr><td>/admin/kb</td><td>知识库管理（状态筛选、新增/编辑抽屉、发布/下线、留痕）</td><td>管理员</td></tr>
+    <tr><td>/admin/unanswered</td><td>未答问题（组列表、详情/拆分、关闭）</td><td>管理员</td></tr>
+    <tr><td>/admin/accounts · /admin/logs</td><td>账号管理、操作留痕查询</td><td>管理员</td></tr>
+  </table>
+
+  <h3>6.2 JSON API 概要</h3>
+  <table>
+    <tr><th>方法 + 路径</th><th>入参 → 出参（要点）</th><th>权限</th></tr>
+    <tr><td>POST /api/ask</td><td>{question} → ①answered：answer + cited(四要素) + 时效行　②missed：兜底（相关条目≤3 + 转办建议）　③out_of_scope：建议渠道　④503 retryable：生成失败（不落库）</td><td>登录</td></tr>
+    <tr><td>POST /api/records/{id}/feedback</td><td>{useful|useless} → 200；非本人/非 answered → 403/409</td><td>本人</td></tr>
+    <tr><td>GET /api/kb?status=</td><td>条目列表（分页/筛选）</td><td>管理员</td></tr>
+    <tr><td>POST /api/kb · PUT /api/kb/{id}</td><td>新增（草稿）/ 编辑；必填校验、标题唯一、相似提示标志返回</td><td>管理员</td></tr>
+    <tr><td>POST /api/kb/{id}/publish</td><td>发布：校验必填 → 状态流转 → 更新索引 → 关联未答组闭环 → 留痕</td><td>管理员</td></tr>
+    <tr><td>POST /api/kb/{id}/offline</td><td>{reason 必填} → offline + 留痕</td><td>管理员</td></tr>
+    <tr><td>GET /api/unanswered/groups?status=</td><td>组列表（代表问题、count、状态、关联条目）</td><td>管理员</td></tr>
+    <tr><td>POST /api/unanswered/groups/{id}/split</td><td>{item_ids[]} → 拆出新组，双方计数更新 + 留痕</td><td>管理员</td></tr>
+    <tr><td>POST /api/unanswered/groups/{id}/close</td><td>{reason 必填} → closed + 留痕</td><td>管理员</td></tr>
+    <tr><td>POST /api/accounts · /{id}/disable · /{id}/reset-password</td><td>创建（返回初始密码一次）、停用（记录保留）、重置（返回临时密码一次）</td><td>管理员</td></tr>
+    <tr><td>POST /api/auth/login · /logout · /change-password</td><td>登录（失败计数/锁定）、登出（删 session）、改密（旧密码验证）</td><td>—</td></tr>
+  </table>
+  <div class="note small">约定：错误统一 {code, message}；ask 不做幂等去重（同一问题重复提问各自记录，由未答清单聚合——PRD 已定）；初始/临时密码仅在创建响应中出现一次，不落日志。</div>
+</section>
+
+<!-- ================= 7 安全与合规 ================= -->
+<section class="card" id="s7">
+  <h2><span class="no">7</span>安全与合规设计</h2>
+  <p class="sec-lead">自建账号体系的全部安全责任在本机；大模型 API 是唯一出域通道，边界必须清晰。</p>
+
+  <h3>7.1 认证与会话</h3>
+  <table>
+    <tr><th>项</th><th>设计</th><th>对应需求</th></tr>
+    <tr><td>密码存储</td><td>bcrypt cost=12；初始密码 secrets 模块生成 12 位（大小写+数字），创建响应展示一次，管理员线下转交</td><td>FR-05 规则 2</td></tr>
+    <tr><td>首次登录强制改密</td><td>must_change_password=1 → 中间件放行仅 /change-password，其余一律 302</td><td>FR-05 规则 2</td></tr>
+    <tr><td>登录锁定</td><td>失败 +1；≥5 次 → locked_until=now+15min，期间拒绝并提示剩余时间；成功清零。阈值 .env 可调</td><td>FR-05 规则 3</td></tr>
+    <tr><td>会话</td><td>服务端 session 表 + HttpOnly/SameSite=Lax Cookie（7 天滑动）；登出删行；<b>每请求校验账号状态</b> → 停用/锁定即时生效</td><td>FR-05 规则 4</td></tr>
+    <tr><td>CSRF</td><td>SameSite=Lax + 写操作全部 POST/PUT + 关键表单携带一次性 token</td><td>—</td></tr>
+    <tr><td>XSS</td><td>Jinja2 自动转义所有插值；答案正文按"纯文本 + 换行/分点"渲染，不做富文本 HTML 透传</td><td>—</td></tr>
+  </table>
+
+  <h3>7.2 数据边界与个人信息保护（PRD 7.2）</h3>
+  <ul>
+    <li><b>出域内容最小化</b>：LLM 请求只包含"问题文本 + 已发布条目内容"，<b>不含</b>提问人身份、账号、IP；问题文本本身在敏感拦截之后才可能出域。</li>
+    <li><b>敏感拦截前置</b>（ADR-2）：4 类敏感内容本地正则拦截，不调用 API、不出域。</li>
+    <li><b>界面明示</b>：输入框常驻提示"请勿输入村民姓名、身份证号等个人敏感信息"（PRD 合规要求）。</li>
+    <li><b>记录可见性</b>：qa_records 仅本人与管理员可查（4.2 权限矩阵）；导出能力 P1，P0 不提供批量导出入口。</li>
+    <li><b>留痕不可篡改</b>：operation_logs append-only + 触发器禁改禁删（4.6）。</li>
+  </ul>
+
+  <h3>7.3 大模型 API 合规（承接 PRD 约束）</h3>
+  <ul>
+    <li>服务商准入（实施期完成）：已完成生成式 AI 服务备案；签署<b>数据协议</b>（明确：不得用于模型训练、保留期限、处置方式）；协议条款确认前不接入生产数据 <span class="chip tbd">TBD</span>。</li>
+    <li><b>API 密钥保管</b>：仅存 .env（gitignore、不进代码库、不入每日备份明文——备份脚本排除该文件，密钥单独封存登记）；泄漏应对：服务商控制台立即轮换 + 更新 .env 重启。</li>
+    <li><b>可替换</b>：OpenAI 兼容协议 + 生成/嵌入服务商均只以 .env 三字段（base_url/api_key/model）配置；换服务商流程：改配置 → 重启 → 跑向量重建脚本（4.3 note）→ 抽样验证 10 问。</li>
+  </ul>
+
+  <h3>7.4 网络边界</h3>
+  <ul>
+    <li>服务仅监听村内办公网段网卡（或 localhost），Windows 防火墙仅放行同网段入站 <span class="chip asm">部署建议</span>；无公网暴露、无端口映射。</li>
+    <li>机器锁屏策略沿用办公电脑现有管理要求（系统外，运维手册说明）。</li>
+  </ul>
+</section>
+
+<!-- ================= 8 部署与备份 ================= -->
+<section class="card" id="s8">
+  <h2><span class="no">8</span>部署与备份</h2>
+  <p class="sec-lead">目标：村干部"重启电脑后系统自动回来"，备份恢复一个文件搞定。</p>
+
+  <h3>8.1 环境要求</h3>
+  <table>
+    <tr><th>项</th><th>要求</th></tr>
+    <tr><td>硬件</td><td>村委会办公电脑：Windows 10/11（64 位）、内存 ≥4GB、磁盘剩余 ≥2GB</td></tr>
+    <tr><td>软件</td><td>Python 3.12+（安装时勾选 pip）、NSSM（单 exe）、Chrome/Edge 浏览器</td></tr>
+    <tr><td>网络</td><td>常规网络：村内访问走局域网；出网仅需 HTTPS 访问大模型 API 域名</td></tr>
+  </table>
+
+  <h3>8.2 安装步骤（一次性，约 6 步）</h3>
+  <ol>
+    <li>安装 Python 3.12（勾选 Add to PATH）；</li>
+    <li>解压发行包到 <code>D:\vqa-system\</code>，<code>python -m venv venv</code> + <code>pip install -r requirements.txt</code>（离线环境用随包 wheel 目录安装）；</li>
+    <li>复制 .env.example → .env，填入大模型 base_url / api_key / model 与阈值参数；</li>
+    <li><code>python manage.py init-db</code>：建表 + 插入内置敏感规则与转办映射 + 创建首个管理员（打印初始密码，抄录后交村委会）；</li>
+    <li>NSSM 注册服务：启动 Uvicorn，配置开机自启 + 崩溃自动重启；</li>
+    <li>浏览器验证：登录 → 改密 → 录入 3 条示例条目 → 发布 → 试问一轮。</li>
+  </ol>
+
+  <h3>8.3 备份与恢复</h3>
+  <table>
+    <tr><th>项</th><th>方案</th></tr>
+    <tr><td>自动备份</td><td>每日 03:00（APScheduler）：WAL checkpoint → sqlite3 backup API 复制 app.db → <code>backup\yyyy-mm-dd.db</code>，滚动保留 30 天</td></tr>
+    <tr><td>离机备份 <span class="chip asm">建议</span></td><td>每周拷贝最近一份备份到 U 盘/村委会另一台电脑（防整机故障/失窃）</td></tr>
+    <tr><td>恢复</td><td>停服务 → 用备份文件覆盖 app.db → 起服务；RPO ≤ 24h（每日一次）</td></tr>
+    <tr><td>恢复演练 <span class="chip asm">建议</span></td><td>上线后演练一次"备份文件 → 新机器 30 分钟拉起"，写入运维手册</td></tr>
+  </table>
+
+  <h3>8.4 升级与变更</h3>
+  <ul>
+    <li>升级流程：停服务 → 手动备份 → 替换代码 → <code>manage.py migrate</code>（建表差异脚本，初期 create_all + 手工 ALTER，量级增长后再评估 Alembic）→ 起服务；</li>
+    <li><b>换大模型服务商</b>：改 .env 三字段 → 重启 → 运行向量重建脚本（条目与未答问题 embedding 全量重算，百级条目 &lt; 1 分钟）→ 抽样验证；</li>
+    <li>密钥轮换：服务商控制台生成新 key → 改 .env → 重启（旧 key 作废）。</li>
+  </ul>
+</section>
+
+<!-- ================= 9 故障与降级 ================= -->
+<section class="card" id="s9">
+  <h2><span class="no">9</span>故障与降级</h2>
+  <p class="sec-lead">每类故障都有明确的系统行为；本地能力与大模型依赖的故障域严格分离。</p>
+  <table>
+    <tr><th>故障场景</th><th>影响面</th><th>系统行为</th><th>恢复路径</th></tr>
+    <tr><td>大模型 API 超时/故障</td><td>仅"答案生成"不可用</td><td>自动重试 1 次 → 仍失败提示"生成失败，请重试"；<b>不落库</b>；知识库/记录/账号等本地功能全部正常</td><td>服务商恢复；或切换备用 .env 配置重启</td></tr>
+    <tr><td>embedding 接口故障</td><td>语义检索降级</td><td>自动降级纯关键词检索继续作答，记录标 degraded=1；聚合暂停（新未答问题各自成组，API 恢复后由管理员视情合并）</td><td>API 恢复自动结束降级</td></tr>
+    <tr><td>整机断网</td><td>问答生成不可用</td><td>登录、知识库管理、记录查询、未答处理全部可用（本地）；敏感拦截照常</td><td>网络恢复</td></tr>
+    <tr><td>进程崩溃</td><td>服务瞬断</td><td>NSSM 自动重启（秒级）；崩溃前未落库的提问无残留（单事务）</td><td>—</td></tr>
+    <tr><td>数据库文件损坏</td><td>数据风险</td><td>停服务 → 取最近每日备份恢复，RPO ≤ 24h</td><td>备份恢复（8.3）</td></tr>
+    <tr><td>定时任务漏跑</td><td>过期条目未及时标记</td><td>检索层双保险过滤（ADR-4），<b>问答不受任何影响</b>；状态由下个周期补齐</td><td>自动</td></tr>
+    <tr><td>API 密钥泄漏</td><td>安全风险</td><td>服务商控制台轮换 + 改 .env 重启（7.3）</td><td>流程写入运维手册</td></tr>
+    <tr><td>磁盘写满</td><td>服务异常</td><td>日志按大小滚动 + 备份滚动 30 份，常态占用 &lt;1GB；运维手册提供磁盘检查项</td><td>人工清理</td></tr>
+  </table>
+</section>
+
+<!-- ================= 10 性能与容量 ================= -->
+<section class="card" id="s10">
+  <h2><span class="no">10</span>性能与容量估算</h2>
+  <p class="sec-lead">单村量级是本方案成立的前提——所有估算按 50 账号上限打满。</p>
+  <table>
+    <tr><th>维度</th><th>估算</th><th>结论</th></tr>
+    <tr><td>问答记录</td><td>50 人 × 日均 2 问 × 360 天 ≈ 3.6 万条/年（含 1 年保留期峰值 &lt; 8 万行）</td><td>SQLite 百万行级才需调优，余量 10 倍以上</td></tr>
+    <tr><td>知识条目</td><td>首批数百条（实施期定目标），年增千条以内</td><td>sqlite-vec 暴力扫描毫秒级，无需 ANN 索引</td></tr>
+    <tr><td>问答时延</td><td>本地环节（拦截+检索+判定）&lt; 200ms；LLM 生成 2–8s（取决于服务商）；端到端 P50 预期 ≤ 10s</td><td>符合"当场答复"场景；超 30s 客户端超时走重试</td></tr>
+    <tr><td>并发</td><td>工作时段同时提问 ≤ 5</td><td>async 单进程轻松承载；SQLite 短事务 + busy_timeout=5s 足够</td></tr>
+    <tr><td>磁盘</td><td>代码+依赖 &lt;500MB；数据库年增 &lt;100MB；日志+备份滚动封顶</td><td>办公电脑无压力</td></tr>
+  </table>
+  <div class="note">PRD 未设定量化性能验收口径（TBD）。建议实施期以"抽查 20 个真实问题：命中场景端到端 ≤ 15s、引用四要素 100% 与条目一致"作为演示验收基线，正式指标由管理方确认后写入验收单 <span class="chip tbd">TBD</span>。</div>
+</section>
+
+<!-- ================= 11 实施期待定项 ================= -->
+<section class="card" id="s11">
+  <h2><span class="no">11</span>实施期待定项（技术侧承接）</h2>
+  <p class="sec-lead">承接 PRD 8.2：以下事项不阻塞方案评审，但实施期需落定，均已有配置位预留。</p>
+  <table>
+    <tr><th>#</th><th>事项</th><th>技术预留位</th><th>影响</th></tr>
+    <tr><td>1</td><td>大模型服务商选择与数据协议条款</td><td>.env：base_url / api_key / model</td><td>签署协议后方可接入生产数据；换商仅需向量重建</td></tr>
+    <tr><td>2</td><td>分类 → 建议转办部门映射表</td><td>referral_map 初始化数据</td><td>兜底卡片文案内容</td></tr>
+    <tr><td>3</td><td>阈值调参：T1 相关性 0.75 / T2 聚合 0.82 / T3 相似提示 0.85</td><td>.env 可调参数</td><td>上线后用真实问题样本校准一周</td></tr>
+    <tr><td>4</td><td>敏感词库初始清单细化（4 类别下的关键词扩充）</td><td>sensitive_rules 初始化数据</td><td>拦截召回率，P1 开放自助维护</td></tr>
+    <tr><td>5</td><td>1 年到期记录的归档导出与清除细则</td><td>定时任务动作位（P0 仅提示）</td><td>到期数据的处置流程</td></tr>
+    <tr><td>6</td><td>量化验收标准</td><td>验收演示剧本（10 节建议基线）</td><td>验收口径</td></tr>
+  </table>
+</section>
+
+<!-- ================= 12 版本记录 ================= -->
+<section class="card" id="s12">
+  <h2><span class="no">12</span>版本记录</h2>
+  <table>
+    <tr><th>版本</th><th>日期</th><th>说明</th></tr>
+    <tr><td>v1.0</td><td>2026-10-13</td><td>技术方案初稿（评审稿）。基于 PRD v0.2（8 项决议）产出：总体架构、技术栈选型及理由、数据模型（8 表）、问答管线与防幻觉三道闸、未答问题聚合/拆分、状态机与定时任务、接口概要、安全合规、部署备份、故障降级、容量估算</td></tr>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+
+<footer class="doc-foot">乡村智能问答系统 · 技术方案 v1.0 · 2026-10-13 · 评审稿 —— 与《产品需求文档 v0.2》配套阅读</footer>
+
+<script>
+/* ============ demo-T1 问答管线步进模拟器 ============ */
+var PIPE={
+  hit:{
+    label:'命中场景',
+    q:'低保申请需要哪些材料？',
+    steps:[
+      {t:'① 提交与校验',s:'服务端复验：非空、长度 ≤ 500 字 ✓；关联当前会话账号（留痕）。知识库非空，进入管线。',d:'question: "低保申请需要哪些材料？"（11 字）✓\nsession: 王网格员（虚构示例）',tone:'ok'},
+      {t:'② 敏感拦截（本地执行）',s:'4 类敏感正则逐条匹配（涉法涉诉/医疗诊断/信访举报/涉资金决策）。本环节在本地完成——敏感内容不出域、不消耗 API。未命中 → 放行。',d:'命中敏感词：无 → 放行（继续）',tone:'ok'},
+      {t:'③ 混合检索（FTS5 + 向量）',s:'问题计算 embedding（API），同时在 FTS5 全文索引检索已发布条目；两路结果 RRF 融合取 Top 5。',d:'候选（向量相似度）：\n  最低生活保障申请指南      0.87\n  临时救助办理流程          0.54\n  特困人员认定办法          0.49\n  （另有 2 条更低分候选，未展示）',tone:''},
+      {t:'④ 相关性判定',s:'Top 1 相似度 0.87 ≥ 阈值 T1(0.75) → 判定"高相关"，进入生成阶段；Top 4-5 低分条目丢弃，不送入模型（减少干扰）。',d:'0.87 ≥ 0.75 ✓ → 高相关，取 Top 3 送入组装',tone:'ok'},
+      {t:'⑤ Prompt 组装',s:'系统提示词（仅依据条目作答 / 不足则 sufficient=false / 只输出 JSON）+ 问题 + Top 3 条目内容。',d:'system: 你是村务问答助手，仅依据<知识条目>作答…\nuser:\n  问题：低保申请需要哪些材料？\n  <条目 id=12> 标题：最低生活保障申请指南\n  正文：申请低保一般需准备：①…②…③…\n  <条目 id=3> 城乡居民医保集中缴费指引 …\n  <条目 id=1> 宅基地建房审批流程 …',tone:''},
+      {t:'⑥ LLM 生成（云端 API · 唯一出域环节）',s:'httpx 异步调用 OpenAI 兼容接口（read 超时 30s，失败自动重试 1 次）。模型输出结构化 JSON。',d:'HTTP 200（耗时约 3.2s · 虚构）\n{\n  "answer": "申请低保一般需准备：① 书面申请书；② 身份证户口簿复印件；③ 家庭收入证明；④ 特殊情况证明（如有）…",\n  "cited_ids": [12],\n  "sufficient": true\n}',tone:''},
+      {t:'⑦ 引用校验（防幻觉闸门）',s:'校验 1：cited_ids=[12] ⊆ 本次提供的 {1,3,12} ✓\n校验 2：sufficient=true ✓\n组装：引用四要素由服务端从 kb_entries#12 读取（标题/依据文件/发布单位/最后核实时间）——不信任模型复述。',d:'校验通过 → 四要素（服务端读库）：\n  条目《最低生活保障申请指南》\n  依据文件：《最低生活保障审核确认办法》\n  发布单位：县民政局\n  最后核实：2026-09-30',tone:'ok'},
+      {t:'⑧ 落库（单事务）',s:'生成成功且校验通过 → 一次性写入 qa_records。任何上游失败都到不了这一步：无半成品记录（PRD 6.5）。',d:'INSERT qa_records\n  (user, question, answer, status="answered", cited=[12])\nCOMMIT ✓',tone:'ok'},
+      {t:'⑨ 返回答案卡片',s:'答案正文 + 引用来源卡片（四要素）+ 时效提示行 + 有用/无用反馈按钮。工作人员据此向村民复述。',d:'渲染答案卡片\n  时效行："以上内容更新于 2026-09-30，请以最新官方发布为准。"\n  反馈：👍有用 / 👎无用（落库时一并留痕）',tone:'ok'}
+    ]
+  },
+  miss:{
+    label:'未命中场景',
+    q:'明年大豆补贴标准是多少？',
+    steps:[
+      {t:'① 提交与校验',s:'服务端复验通过，知识库非空，进入管线。',d:'question: "明年大豆补贴标准是多少？"（11 字）✓',tone:'ok'},
+      {t:'② 敏感拦截（本地执行）',s:'未命中敏感类别 → 放行。',d:'命中敏感词：无 → 放行',tone:'ok'},
+      {t:'③ 混合检索（FTS5 + 向量）',s:'双路召回后最高分仅 0.61——知识库尚未收录"明年大豆补贴标准"的官方依据。',d:'候选（向量相似度）：\n  耕地地力保护补贴申领指南    0.61\n  农业补贴政策常见问答        0.58\n  危房改造补助申请流程        0.31',tone:''},
+      {t:'④ 相关性判定',s:'Top 1 相似度 0.61 < 阈值 T1(0.75) → 判定"未命中"。这是正常业务结果（依据不足不硬答——PRD 6.1 底线），照常落库。',d:'0.61 < 0.75 ✗ → 未命中\n（区别于技术失败：不提供重试按钮）',tone:'miss'},
+      {t:'⑤ 兜底组装',s:'兜底三要素：明确"暂无可靠答案" + 相关已发布条目 ≤3（供自行查看）+ 转办建议（按分类查 referral_map：惠民政策 → 建议向乡镇农经站/县农业农村局咨询）。',d:'兜底卡片素材：\n  相关条目：《耕地地力保护补贴申领指南》等 2 条\n  转办建议：乡镇农经站 / 县农业农村局\n  提示："该问题已自动记录，管理员将补充知识条目"',tone:'miss'},
+      {t:'⑥ 落库 + 未答问题聚合（同一事务）',s:'写入 qa_records(status=missed)；同事务计算问题 embedding，与待处理组逐一比对平均相似度：与现有组"明年大豆补贴标准是多少"相似度 0.93 ≥ T2(0.82) → 并入该组。',d:'INSERT qa_records (status="missed")\nINSERT unanswered_items (group=7, embedding=…)\nUPDATE unanswered_groups SET count = 4→5 ✓\nCOMMIT（原子完成，无中间态）',tone:'ok'},
+      {t:'⑦ 返回兜底卡片',s:'展示"暂无可靠答案"+ 相关条目 + 转办建议 + 已记录提示。管理员在未答清单看到该组聚合计数 +5，择期补充。',d:'兜底卡片渲染完成\n管理员视角：未答问题组《明年大豆补贴标准》（5 次聚合 · 待处理）',tone:'ok'},
+      {t:'（后续闭环）发布新条目',s:'管理员"去补充"→ 新条目《大豆补贴标准说明》发布时：发布事务内将组标记"已补充"并回填 related_entry_id（双向关联）。此后同类问题直接命中。',d:'kb_publish 事务内：\nUPDATE unanswered_groups\n  SET status="supplemented", related_entry_id=15\n此后提问"大豆补贴"→ 命中条目#15 ✓',tone:'ok'}
+    ]
+  },
+  sens:{
+    label:'敏感拦截场景',
+    q:'邻居欠钱不还，想咨询怎么起诉',
+    steps:[
+      {t:'① 提交与校验',s:'服务端复验通过，进入管线。',d:'question: "邻居欠钱不还，想咨询怎么起诉"（13 字）✓',tone:'ok'},
+      {t:'② 敏感拦截（本地执行）→ 命中',s:'正则命中"起诉"→ 涉法涉诉类。<b>流程到此为止</b>：不检索、不调用云端 API、问题文本不出域。展示建议渠道 + "不构成专业意见"提示。',d:'命中：涉法涉诉类（关键词：起诉）\n建议渠道：镇司法所当面咨询 / 12348 法律援助热线\n提示：本回答不构成法律意见',tone:'sens'},
+      {t:'③ 落库（单事务）',s:'写入 qa_records(status=out_of_scope，记录命中类别)。按 PRD 规则：敏感记录<b>不生成</b>未答问题——不污染知识缺口清单。',d:'INSERT qa_records\n  (question, status="out_of_scope", detail=命中类别:涉法涉诉)\nCOMMIT ✓（无 unanswered_item 生成）',tone:'ok'},
+      {t:'④ 返回拦截卡片',s:'展示建议渠道卡片。管理员可按月在留痕/记录中查看"超出范围"类记录（是否建立上报流程为 PRD 待定项）。',d:'拦截卡片渲染完成\n管理员月度视角：超出范围记录（本月 X 条 · 虚构）',tone:'ok'}
+    ]
+  }
+};
+var pipeCur={scen:'hit',step:-1};
+function pipeInit(){
+  var sc=document.getElementById('pipeScens');
+  sc.innerHTML=Object.keys(PIPE).map(function(k){
+    return '<button class="scen-chip'+(pipeCur.scen===k?' on':'')+'" onclick="pipeScen(\''+k+'\')">'+PIPE[k].label+'</button>';
+  }).join('');
+}
+function pipeScen(k){pipeCur.scen=k;pipeCur.step=-1;pipeRender()}
+function pipeGo(i){pipeCur.step=i;pipeRender()}
+function pipeRender(){
+  pipeInit();
+  var sc=PIPE[pipeCur.scen];
+  document.getElementById('pipeQ').innerHTML='<b>示例问题</b>：'+sc.q;
+  var list=document.getElementById('pipeList'),html='';
+  for(var i=0;i<sc.steps.length;i++){
+    var cls=i<pipeCur.step?'done':(i===pipeCur.step?'now':'');
+    var num=i<pipeCur.step?'✓':(i+1);
+    html+='<div class="pstep '+cls+'" onclick="pipeGo('+i+')"><span class="pnum">'+num+'</span><span>'+sc.steps[i].t+'</span></div>';
+  }
+  list.innerHTML=html;
+  var det=document.getElementById('pipeDetail');
+  if(pipeCur.step<0){
+    det.innerHTML='<div class="pipe-wait">本场景共 '+sc.steps.length+' 个环节。点击"下一环节"开始逐步查看（数据为虚构示例）。</div>';
+  }else{
+    var s=sc.steps[pipeCur.step];
+    det.innerHTML='<div class="pd-t">'+s.t+'</div><div class="pd-s">'+s.s+'</div><pre class="pd-d">'+s.d.replace(/</g,'&lt;')+'</pre>';
+    det.scrollTop=0;
+  }
+  document.getElementById('pipePrev').disabled=pipeCur.step<=0;
+  document.getElementById('pipeNext').disabled=pipeCur.step>=sc.steps.length-1;
+}
+document.getElementById('pipePrev').onclick=function(){if(pipeCur.step>0){pipeCur.step--;pipeRender()}};
+document.getElementById('pipeNext').onclick=function(){if(pipeCur.step<PIPE[pipeCur.scen].steps.length-1){pipeCur.step++;pipeRender()}};
+pipeRender();
+</script>
+</body>
+</html>

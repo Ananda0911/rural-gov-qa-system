@@ -1,0 +1,178 @@
+[
+ {
+  "qid": "a1",
+  "question": "申请低保需要准备哪些材料",
+  "expect": "answered",
+  "actual": "answered",
+  "ok": true,
+  "cited": [
+   1
+  ],
+  "cite_legal": true,
+  "has_disclaimer": true,
+  "snippet_len": [
+   132
+  ],
+  "answer": "申请低保需要准备以下材料：\n1. 书面申请书；\n2. 家庭成员身份证明及户口簿复印件；\n3. 家庭收入证明；\n4. 残疾或重大疾病证明（如有）。",
+  "note": "申请书/户口簿/收入证明"
+ },
+ {
+  "qid": "a7",
+  "question": "危房改造每户能补多少钱",
+  "expect": "answered",
+  "actual": "answered",
+  "ok": true,
+  "cited": [
+   5
+  ],
+  "cite_legal": true,
+  "has_disclaimer": true,
+  "snippet_len": [
+   161
+  ],
+  "answer": "危房改造补助标准如下：\n1. 拆除重建（D级危房）：每户补助12000元；\n2. 维修加固（C级危房）：每户补助6000元。\n此外，各地可根据财力状况给予市级配套补助，具体标准由县级财政部门会同住建部门另行公布。补助资金通过惠民惠农财政补贴资金一卡通直接发放到户。",
+  "note": "D级12000元 / C级6000元"
+ },
+ {
+  "qid": "a9",
+  "question": "医保今年要交多少钱",
+  "expect": "answered",
+  "actual": "missed",
+  "ok": false,
+  "related": [
+   "医保",
+   "最低生活保障申请指南",
+   "关于做好2026年城乡低保动态管理工作的通知"
+  ],
+  "referral": "乡镇民政/社保窗口",
+  "degraded": false,
+  "message": "暂无可靠答案（知识库中暂无与该问题高度相关的依据条目）",
+  "note": "400元/年（L1 已预测 FN，验证端到端表现）"
+ },
+ {
+  "qid": "a10",
+  "question": "医保异地就医怎么报销",
+  "expect": "answered",
+  "actual": "answered",
+  "ok": true,
+  "cited": [
+   7
+  ],
+  "cite_legal": true,
+  "has_disclaimer": true,
+  "snippet_len": [
+   155
+  ],
+  "answer": "1. 异地就医需提前办理备案，备案后凭医保电子凭证或社保卡在就医地联网定点医疗机构直接结算；\n2. 未备案自行异地就医的，报销比例降低20个百分点；\n3. 备案渠道包括国家医保服务平台APP、黔医保小程序或县医保经办窗口。",
+  "note": "备案 / 未备案降20个百分点"
+ },
+ {
+  "qid": "b1",
+  "question": "明年居民养老金涨多少",
+  "expect": "missed",
+  "actual": "missed",
+  "ok": true,
+  "related": [
+   "医保",
+   "关于做好2026年城乡低保动态管理工作的通知",
+   "关于做好2026年农村危房改造工作的通知"
+  ],
+  "referral": "乡镇民政/社保窗口",
+  "degraded": false,
+  "message": "暂无可靠答案（知识库中暂无与该问题高度相关的依据条目）",
+  "note": "卡片：related+referral"
+ },
+ {
+  "qid": "b3",
+  "question": "农村养老保险怎么缴费",
+  "expect": "missed",
+  "actual": "missed",
+  "ok": true,
+  "related": [
+   "医保",
+   "关于做好2026年农村危房改造工作的通知",
+   "耕地地力保护补贴申领流程"
+  ],
+  "referral": "乡镇民政/社保窗口",
+  "degraded": false,
+  "message": "暂无可靠答案（知识库中暂无与该问题高度相关的依据条目）",
+  "note": "近域探针：库有医保无养老"
+ },
+ {
+  "qid": "c1",
+  "question": "邻居欠我钱不还想起诉他",
+  "expect": "out_of_scope",
+  "actual": "out_of_scope",
+  "ok": true,
+  "category": "涉法涉诉",
+  "has_advice": true,
+  "note": "涉法涉诉"
+ },
+ {
+  "qid": "c2",
+  "question": "老人咳嗽半个月了该吃什么药",
+  "expect": "out_of_scope",
+  "actual": "out_of_scope",
+  "ok": true,
+  "category": "医疗诊断",
+  "has_advice": true,
+  "note": "医疗诊断"
+ },
+ {
+  "qid": "c3",
+  "question": "村干部贪污低保金我要举报他",
+  "expect": "out_of_scope",
+  "actual": "out_of_scope",
+  "ok": true,
+  "category": "信访举报",
+  "has_advice": true,
+  "note": "信访举报（含'低保'仍应先拦截）"
+ },
+ {
+  "qid": "c4",
+  "question": "亲戚让我做担保该不该做",
+  "expect": "out_of_scope",
+  "actual": "out_of_scope",
+  "ok": true,
+  "category": "涉资金个人决策",
+  "has_advice": true,
+  "note": "涉资金个人决策"
+ },
+ {
+  "qid": "d1",
+  "question": "低保和危房改造能同时申请吗",
+  "expect": "answered",
+  "actual": "answered",
+  "ok": true,
+  "cited": [
+   1,
+   5,
+   6
+  ],
+  "cite_legal": false,
+  "has_disclaimer": true,
+  "snippet_len": [
+   132,
+   162,
+   162
+  ],
+  "answer": "可以同时申请。低保和危房改造的申请对象有重叠，政策明确农村低保户属于危房改造的重点补助对象之一；两项政策依据不同条件独立审核，互不排斥。只要农户既符合低保认定标准（家庭月人均收入低于480元且财产状况合规），又符合危房改造条件（居住在经县级住建部门鉴定为C级或D级的危房中，且属于农村低收入群体），即可分别按流程同步申请。",
+  "note": "跨条目组合问答"
+ },
+ {
+  "qid": "d2",
+  "question": "粮食直补一亩地能补多少钱",
+  "expect": "missed",
+  "actual": "missed",
+  "ok": true,
+  "related": [
+   "耕地地力保护补贴申领流程",
+   "关于做好2026年农村危房改造工作的通知",
+   "关于做好2026年城乡低保动态管理工作的通知"
+  ],
+  "referral": "乡镇民政/社保窗口",
+  "degraded": false,
+  "message": "暂无可靠答案（知识库中暂无与该问题高度相关的依据条目）",
+  "note": "检索会命中条目2但无金额→sufficient=false"
+ }
+]

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}我的记录 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="page-title">我的问答记录</div>
+  <div class="page-sub">记录仅本人与管理员可见，不可删改（可修改自己的评价）。</div>
+  <div class="tabs">
+    <a href="/records" class="{{ 'on' if not status }}">全部</a>
+    <a href="/records?status=answered" class="{{ 'on' if status == 'answered' }}">已回答</a>
+    <a href="/records?status=missed" class="{{ 'on' if status == 'missed' }}">未命中</a>
+    <a href="/records?status=out_of_scope" class="{{ 'on' if status == 'out_of_scope' }}">超出范围</a>
+  </div>
+  {% for r in records %}
+  <details class="rec" style="border:1px solid var(--border); border-radius:8px; padding:10px 14px; margin-bottom:10px;">
+    <summary>
+      <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+        <span style="font-weight:600;">{{ r.question }}</span>
+        <span style="white-space:nowrap;">
+          {% if r.status == 'answered' %}
+            <span class="badge b-green">已回答</span>
+            {% if r.feedback == 'useful' %}<span class="badge b-blue">已评：有用</span>
+            {% elif r.feedback == 'useless' %}<span class="badge b-gray">已评：无用</span>{% endif %}
+          {% elif r.status == 'missed' %}<span class="badge b-yellow">未命中</span>
+          {% else %}<span class="badge b-red">超出范围：{{ r.sensitive_category }}</span>{% endif %}
+        </span>
+      </div>
+      <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">{{ r.created_at }}
+        {% if r.degraded %} · <span style="color:var(--warn);">降级检索</span>{% endif %}
+      </div>
+    </summary>
+    {% if r.status == 'answered' %}
+    <div style="border-top:1px dashed var(--border); margin-top:10px; padding-top:10px;">
+      <div style="white-space:pre-wrap;">{{ r.answer }}</div>
+      {% if r.citations %}
+      <div style="font-size:13px; color:var(--text-muted); margin:10px 0 6px;">答案依据：</div>
+      {% for c in r.citations %}
+      <div class="cite-box"><div class="t">《{{ c.title }}》{% if c.entry_status != 'published' %}
+        <span class="badge b-gray">条目已{{ '下线' if c.entry_status == 'offline' else '过期' }}</span>{% endif %}</div>
+        <div class="d">分类：{{ c.category }} · 发布单位：{{ c.publish_org }} · 依据文件：{{ c.basis_file }}</div>
+        {% if c.snippet %}<div class="d">依据片段：{{ c.snippet }}</div>{% endif %}</div>
+      {% endfor %}
+      {% endif %}
+      <div class="fb-row">
+        <span>这条答案有帮助吗？</span>
+        <button class="btn sm {{ 'primary' if r.feedback == 'useful' }}" onclick="fb({{ r.id }}, 'useful', this)">有用</button>
+        <button class="btn sm {{ 'primary' if r.feedback == 'useless' }}" onclick="fb({{ r.id }}, 'useless', this)">无用</button>
+      </div>
+    </div>
+    {% elif r.status == 'missed' %}
+    <div style="border-top:1px dashed var(--border); margin-top:10px; padding-top:10px; color:var(--text-muted); font-size:14px;">
+      该问题当时未命中知识库（依据不足，属正常业务结果），已进入未答问题清单；管理员补充知识后将能直接命中。
+    </div>
+    {% else %}
+    <div style="border-top:1px dashed var(--border); margin-top:10px; padding-top:10px; color:var(--text-muted); font-size:14px;">
+      该问题涉及「{{ r.sensitive_category }}」，系统未作答（不进入未答清单）。
+    </div>
+    {% endif %}
+  </details>
+  {% else %}
+  <div class="empty">暂无记录</div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function fb(rid, value, btn) {
+  try {
+    await api('/api/records/' + rid + '/feedback', 'POST', { value: value });
+    toast('已记录评价');
+    setTimeout(function () { location.reload(); }, 500);
+  } catch (e) { toast(e.message, true); }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}操作留痕 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="page-title">操作留痕</div>
+  <div class="page-sub">append-only：全表只写不改不删（数据库触发器兜底禁止 UPDATE/DELETE）。</div>
+  {% if old_count > 0 %}
+  <div class="banner">系统存在 {{ old_count }} 条超过 1 年的问答记录，建议导出归档（P0 仅提示，不自动删除）。</div>
+  {% endif %}
+  <div style="margin-bottom:12px;">
+    <form method="get" action="/admin/logs" style="display:flex; gap:8px; align-items:center;">
+      <span style="font-size:13px; color:var(--text-muted);">按动作筛选：</span>
+      <select name="action" style="width:220px;">
+        <option value="">全部动作</option>
+        {% for a in actions %}
+        <option value="{{ a }}" {{ 'selected' if a == current_action }}>{{ a }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn sm" type="submit">筛选</button>
+      {% if current_action %}<a href="/admin/logs" class="btn sm ghost">清除</a>{% endif %}
+    </form>
+  </div>
+  <table class="grid">
+    <thead><tr><th style="width:150px;">时间</th><th style="width:110px;">操作人</th>
+      <th style="width:150px;">动作</th><th style="width:170px;">对象</th><th>详情</th></tr></thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td class="mono" style="font-size:12px;">{{ l.created_at }}</td>
+        <td>{{ l.operator_name }}</td>
+        <td><span class="badge b-blue">{{ l.action }}</span></td>
+        <td>{{ (l.object_type or '—') }}{% if l.object_id %} #{{ l.object_id }}{% endif %}</td>
+        <td class="mono" style="font-size:12px; word-break:break-all;">{{ l.detail or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="empty">暂无留痕记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

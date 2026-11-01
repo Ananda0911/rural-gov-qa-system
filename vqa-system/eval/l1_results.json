@@ -1,0 +1,758 @@
+[
+ {
+  "qid": "a1",
+  "question": "申请低保需要准备哪些材料",
+  "gold": [
+   1,
+   6
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "申请",
+   "低保",
+   "需要",
+   "准备",
+   "材料"
+  ],
+  "fts_top3": [
+   5,
+   1,
+   6
+  ],
+  "vec_top3": [
+   [
+    1,
+    0.8761
+   ],
+   [
+    6,
+    0.6312
+   ],
+   [
+    2,
+    0.4319
+   ]
+  ],
+  "rrf_top5": [
+   1,
+   5,
+   6,
+   2,
+   4
+  ],
+  "top1_sim": 0.8761,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": false,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a2",
+  "question": "低保标准每个月是多少钱",
+  "gold": [
+   6
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "低保",
+   "标准",
+   "每个",
+   "多少"
+  ],
+  "fts_top3": [
+   6,
+   7,
+   1
+  ],
+  "vec_top3": [
+   [
+    6,
+    0.617
+   ],
+   [
+    1,
+    0.6136
+   ],
+   [
+    5,
+    0.4346
+   ]
+  ],
+  "rrf_top5": [
+   6,
+   1,
+   7,
+   5,
+   4
+  ],
+  "top1_sim": 0.617,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a3",
+  "question": "耕地地力保护补贴怎么申领",
+  "gold": [
+   2
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "耕地",
+   "保护",
+   "补贴",
+   "申领"
+  ],
+  "fts_top3": [
+   2,
+   3,
+   6
+  ],
+  "vec_top3": [
+   [
+    2,
+    0.9104
+   ],
+   [
+    1,
+    0.4704
+   ],
+   [
+    4,
+    0.4382
+   ]
+  ],
+  "rrf_top5": [
+   2,
+   6,
+   3,
+   5,
+   1
+  ],
+  "top1_sim": 0.9104,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a4",
+  "question": "种粮补贴什么时候发放",
+  "gold": [
+   2
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "种粮",
+   "补贴",
+   "时候",
+   "发放"
+  ],
+  "fts_top3": [
+   2,
+   3,
+   6
+  ],
+  "vec_top3": [
+   [
+    2,
+    0.5948
+   ],
+   [
+    5,
+    0.3886
+   ],
+   [
+    6,
+    0.3529
+   ]
+  ],
+  "rrf_top5": [
+   2,
+   3,
+   6,
+   5,
+   1
+  ],
+  "top1_sim": 0.5948,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a5",
+  "question": "村里的财务收支在哪里可以查到",
+  "gold": [
+   3
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "村里",
+   "财务",
+   "收支",
+   "财务收支",
+   "哪里",
+   "可以"
+  ],
+  "fts_top3": [
+   3
+  ],
+  "vec_top3": [
+   [
+    3,
+    0.6756
+   ],
+   [
+    7,
+    0.3925
+   ],
+   [
+    6,
+    0.3902
+   ]
+  ],
+  "rrf_top5": [
+   3,
+   7,
+   6,
+   2,
+   5
+  ],
+  "top1_sim": 0.6756,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a6",
+  "question": "宅基地申请流程是什么",
+  "gold": [
+   4
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "宅基",
+   "基地",
+   "宅基地",
+   "申请",
+   "流程"
+  ],
+  "fts_top3": [
+   4,
+   1,
+   2
+  ],
+  "vec_top3": [
+   [
+    4,
+    0.8434
+   ],
+   [
+    2,
+    0.5774
+   ],
+   [
+    1,
+    0.4996
+   ]
+  ],
+  "rrf_top5": [
+   4,
+   1,
+   2,
+   6,
+   5
+  ],
+  "top1_sim": 0.8434,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a7",
+  "question": "危房改造每户能补多少钱",
+  "gold": [
+   5
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "危房",
+   "房改",
+   "改造",
+   "危房改造",
+   "每户",
+   "能补",
+   "多少"
+  ],
+  "fts_top3": [
+   5
+  ],
+  "vec_top3": [
+   [
+    5,
+    0.4004
+   ],
+   [
+    6,
+    0.3379
+   ],
+   [
+    2,
+    0.3226
+   ]
+  ],
+  "rrf_top5": [
+   5,
+   6,
+   2,
+   7,
+   3
+  ],
+  "top1_sim": 0.4004,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a8",
+  "question": "危房改造申请到批复要多长时间",
+  "gold": [
+   5
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "危房",
+   "房改",
+   "改造",
+   "危房改造",
+   "申请",
+   "批复",
+   "多长",
+   "时间"
+  ],
+  "fts_top3": [
+   5,
+   7,
+   1
+  ],
+  "vec_top3": [
+   [
+    5,
+    0.3944
+   ],
+   [
+    4,
+    0.3355
+   ],
+   [
+    1,
+    0.3166
+   ]
+  ],
+  "rrf_top5": [
+   5,
+   4,
+   1,
+   7,
+   6
+  ],
+  "top1_sim": 0.3944,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a9",
+  "question": "医保今年要交多少钱",
+  "gold": [
+   7
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "医保",
+   "今年",
+   "要交",
+   "多少"
+  ],
+  "fts_top3": [
+   7
+  ],
+  "vec_top3": [
+   [
+    7,
+    0.5389
+   ],
+   [
+    1,
+    0.3386
+   ],
+   [
+    6,
+    0.3118
+   ]
+  ],
+  "rrf_top5": [
+   7,
+   1,
+   6,
+   2,
+   5
+  ],
+  "top1_sim": 0.5389,
+  "t1_pass": false,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a10",
+  "question": "医保异地就医怎么报销",
+  "gold": [
+   7
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "医保",
+   "异地",
+   "就医",
+   "报销"
+  ],
+  "fts_top3": [
+   7
+  ],
+  "vec_top3": [
+   [
+    7,
+    0.5282
+   ],
+   [
+    2,
+    0.3163
+   ],
+   [
+    1,
+    0.2948
+   ]
+  ],
+  "rrf_top5": [
+   7,
+   2,
+   1,
+   6,
+   3
+  ],
+  "top1_sim": 0.5282,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a11",
+  "question": "低保多长时间核查一次",
+  "gold": [
+   6
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "低保",
+   "多长",
+   "时间",
+   "长时间",
+   "多长时间",
+   "核查",
+   "一次"
+  ],
+  "fts_top3": [
+   7,
+   6,
+   1
+  ],
+  "vec_top3": [
+   [
+    6,
+    0.5363
+   ],
+   [
+    1,
+    0.5247
+   ],
+   [
+    5,
+    0.4939
+   ]
+  ],
+  "rrf_top5": [
+   6,
+   7,
+   1,
+   5,
+   2
+  ],
+  "top1_sim": 0.5363,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": false,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "a12",
+  "question": "危房改造哪些人可以申请",
+  "gold": [
+   5
+  ],
+  "expect_relevant": true,
+  "tokens": [
+   "危房",
+   "房改",
+   "改造",
+   "危房改造",
+   "可以",
+   "申请"
+  ],
+  "fts_top3": [
+   5,
+   1,
+   4
+  ],
+  "vec_top3": [
+   [
+    5,
+    0.3652
+   ],
+   [
+    1,
+    0.3116
+   ],
+   [
+    6,
+    0.2866
+   ]
+  ],
+  "rrf_top5": [
+   5,
+   1,
+   6,
+   4,
+   2
+  ],
+  "top1_sim": 0.3652,
+  "t1_pass": true,
+  "degraded": false,
+  "hit1": true,
+  "hit3": true,
+  "hit5": true,
+  "mrr": 1.0,
+  "fts_only_hit1": true,
+  "vec_only_hit1": true
+ },
+ {
+  "qid": "b1",
+  "question": "明年居民养老金涨多少",
+  "gold": [],
+  "expect_relevant": false,
+  "tokens": [
+   "明年",
+   "居民",
+   "养老",
+   "老金",
+   "养老金",
+   "多少"
+  ],
+  "fts_top3": [
+   7
+  ],
+  "vec_top3": [
+   [
+    6,
+    0.3372
+   ],
+   [
+    7,
+    0.3301
+   ],
+   [
+    5,
+    0.2697
+   ]
+  ],
+  "rrf_top5": [
+   7,
+   6,
+   5,
+   2,
+   3
+  ],
+  "top1_sim": 0.3301,
+  "t1_pass": false,
+  "degraded": false
+ },
+ {
+  "qid": "b2",
+  "question": "村里路灯不亮了找谁反映",
+  "gold": [],
+  "expect_relevant": false,
+  "tokens": [
+   "村里",
+   "灯不亮",
+   "反映"
+  ],
+  "fts_top3": [
+   3,
+   7,
+   6
+  ],
+  "vec_top3": [
+   [
+    3,
+    0.4336
+   ],
+   [
+    4,
+    0.3983
+   ],
+   [
+    5,
+    0.383
+   ]
+  ],
+  "rrf_top5": [
+   3,
+   7,
+   6,
+   4,
+   5
+  ],
+  "top1_sim": 0.4336,
+  "t1_pass": false,
+  "degraded": false
+ },
+ {
+  "qid": "b3",
+  "question": "农村养老保险怎么缴费",
+  "gold": [],
+  "expect_relevant": false,
+  "tokens": [
+   "农村",
+   "养老",
+   "保险",
+   "养老保险",
+   "缴费"
+  ],
+  "fts_top3": [
+   7,
+   5
+  ],
+  "vec_top3": [
+   [
+    2,
+    0.4893
+   ],
+   [
+    7,
+    0.4509
+   ],
+   [
+    3,
+    0.376
+   ]
+  ],
+  "rrf_top5": [
+   7,
+   5,
+   2,
+   3,
+   1
+  ],
+  "top1_sim": 0.4509,
+  "t1_pass": false,
+  "degraded": false
+ },
+ {
+  "qid": "b4",
+  "question": "孩子上学学区怎么划分",
+  "gold": [],
+  "expect_relevant": false,
+  "tokens": [
+   "孩子",
+   "上学",
+   "学区",
+   "划分"
+  ],
+  "fts_top3": [],
+  "vec_top3": [
+   [
+    2,
+    0.313
+   ],
+   [
+    4,
+    0.2849
+   ],
+   [
+    5,
+    0.2592
+   ]
+  ],
+  "rrf_top5": [
+   2,
+   4,
+   5,
+   1,
+   3
+  ],
+  "top1_sim": 0.313,
+  "t1_pass": false,
+  "degraded": false
+ }
+]

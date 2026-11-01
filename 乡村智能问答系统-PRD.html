@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乡村智能问答系统 PRD v0.1（草稿）</title>
+<style>
+:root{
+  --primary:#2e7d4f; --primary-deep:#1f5c39; --primary-weak:#eaf3ee;
+  --ink:#1f2d24; --muted:#68766d; --line:#e2e8e3; --bg:#f5f7f5; --card:#ffffff;
+  --amber:#b8860b; --amber-bg:#fdf6e3; --blue:#2b6cb0; --blue-bg:#ebf4fb;
+  --green:#2e7d4f; --orange:#c05e1a; --gray:#77807a; --red:#b3362b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.75}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+/* ===== 头部 ===== */
+.doc-hero{background:linear-gradient(135deg,#1f5c39 0%,#2e7d4f 60%,#3d8f61 100%);color:#fff;padding:52px 0 44px}
+.doc-hero .kicker{opacity:.85;font-size:13px;letter-spacing:.2em;margin-bottom:10px}
+.doc-hero h1{margin:0 0 14px;font-size:32px;line-height:1.3;font-weight:700}
+.doc-hero p.sub{margin:0 0 22px;opacity:.92;max-width:720px}
+.meta-chips{display:flex;flex-wrap:wrap;gap:10px}
+.meta-chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+  border-radius:999px;padding:4px 14px;font-size:13px}
+
+/* ===== 目录 ===== */
+.toc{position:sticky;top:0;z-index:60;background:rgba(245,247,245,.96);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.toc .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+.toc a{white-space:nowrap;font-size:13.5px;color:var(--muted);padding:5px 12px;border-radius:8px}
+.toc a:hover{background:var(--primary-weak);color:var(--primary-deep);text-decoration:none}
+
+/* ===== 章节 ===== */
+section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:34px 38px;margin:26px 0;box-shadow:0 1px 3px rgba(31,45,36,.04)}
+h2{font-size:22px;margin:0 0 6px;color:var(--primary-deep);display:flex;align-items:center;gap:10px}
+h2 .no{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border-radius:8px;background:var(--primary-weak);color:var(--primary);font-size:15px}
+.sec-lead{color:var(--muted);margin:0 0 18px;font-size:14px}
+h3{font-size:17px;margin:26px 0 10px;color:var(--ink)}
+h4{font-size:15px;margin:18px 0 8px}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:24px}
+li{margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th{background:#f1f5f1;text-align:left;padding:9px 12px;border:1px solid var(--line);font-weight:600}
+td{padding:9px 12px;border:1px solid var(--line);vertical-align:top}
+code{background:#f1f5f1;border-radius:4px;padding:1px 6px;font-size:13.5px}
+
+/* ===== 标记 ===== */
+.chip{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.chip.tbd{background:var(--amber-bg);color:var(--amber);border:1px solid #ecd9a0}
+.chip.asm{background:var(--blue-bg);color:var(--blue);border:1px solid #bcd8ef}
+.chip.pub{background:var(--primary-weak);color:var(--green)}
+.chip.draft{background:#eef1ee;color:var(--gray)}
+.chip.off{background:#f0f0ee;color:#8a8a84}
+.chip.exp{background:#fdeceb;color:var(--red)}
+.chip.hit{background:var(--primary-weak);color:var(--green)}
+.chip.miss{background:#fdf0e4;color:var(--orange)}
+.chip.pend{background:#fdf0e4;color:var(--orange)}
+.chip.done{background:var(--primary-weak);color:var(--green)}
+.chip.closed{background:#f0f0ee;color:var(--gray)}
+.note{border-left:3px solid var(--primary);background:var(--primary-weak);
+  border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:14px}
+.note.warn{border-left-color:var(--amber);background:var(--amber-bg)}
+.note.small{font-size:13px;color:var(--muted)}
+mark{background:#fff3c4;padding:0 3px;border-radius:3px}
+
+/* ===== 演示窗口 ===== */
+.win{border:1px solid #d3dcd4;border-radius:12px;overflow:hidden;margin:18px 0;
+  box-shadow:0 6px 22px rgba(31,45,36,.08);background:#fff}
+.win-bar{background:#e9eee9;padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #dbe2dc}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.r{background:#e8746a}.dot.y{background:#ecc94b}.dot.g{background:#6fcf7c}
+.win-title{font-size:12.5px;color:var(--muted);margin-left:8px}
+.win-note{margin:10px 14px;font-size:12.5px;color:var(--amber);
+  background:var(--amber-bg);border:1px dashed #ecd9a0;border-radius:8px;padding:6px 12px}
+.btn{display:inline-block;border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:8px;padding:6px 16px;font-size:13.5px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-deep);color:#fff}
+.btn.sm{padding:3px 12px;font-size:12.5px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* 问答演示 */
+.qa-app{display:grid;grid-template-columns:1fr 240px;min-height:440px}
+.qa-main{border-right:1px solid var(--line);display:flex;flex-direction:column}
+.qa-head{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.qa-chat{flex:1;overflow-y:auto;padding:16px;max-height:430px;background:#fbfcfb}
+.qa-row{display:flex;margin:10px 0}
+.qa-row.user{justify-content:flex-end}
+.bubble{max-width:78%;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.6}
+.bubble.user{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+.bubble.ai{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;max-width:92%;width:100%}
+.bubble.ai .b-title{font-weight:700;margin-bottom:6px}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}
+.typing span{width:7px;height:7px;background:#b9c6bb;border-radius:50%;animation:blink 1s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.ans-src{background:#f4f8f4;border:1px solid #dfe8df;border-radius:8px;padding:8px 12px;margin-top:10px;font-size:12.8px;color:#415044}
+.ans-src .t{font-weight:700;color:var(--primary-deep)}
+.ans-foot{margin-top:8px;font-size:12.3px;color:var(--muted)}
+.fb-row{display:flex;gap:8px;margin-top:10px;align-items:center}
+.fb-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 14px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.fb-btn.on{background:var(--primary-weak);border-color:var(--primary);color:var(--primary)}
+.miss-box{border:1px dashed #d8b48a;background:#fdf8f0;border-radius:10px;padding:12px 14px;margin-top:6px}
+.miss-box .mt{font-weight:700;color:var(--orange)}
+.miss-box ul{margin:8px 0 4px;padding-left:20px;font-size:13px}
+.sens-box{border:1px solid #e5c0ba;background:#fdf3f1;border-radius:10px;padding:12px 14px;margin-top:6px}
+.sens-box .st{font-weight:700;color:var(--red)}
+.qa-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+.q-chip{border:1px solid var(--primary);color:var(--primary);border-radius:999px;
+  padding:3px 12px;font-size:12.5px;cursor:pointer;background:#fff}
+.q-chip:hover{background:var(--primary-weak)}
+.qa-input{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:#fff}
+.qa-input input{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+.qa-side{background:#f8faf8;display:flex;flex-direction:column}
+.qa-side .hd{padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink)}
+.qa-hist{flex:1;overflow-y:auto;padding:10px 12px}
+.hist-item{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:12.5px;cursor:pointer}
+.hist-item .q{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-item .m{margin-top:3px;display:flex;justify-content:space-between;color:var(--muted);font-size:11.5px}
+.hist-empty{color:var(--muted);font-size:12.5px;text-align:center;padding:26px 8px}
+
+/* 知识库演示 */
+.kb-toolbar{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.kb-filter{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer;color:var(--muted)}
+.kb-filter.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.kb-list{padding:8px 14px 0}
+.kb-row{border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:9px;background:#fff}
+.kb-row .r1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kb-row .t{font-weight:700;font-size:14px;flex:1;min-width:200px}
+.kb-row .meta{font-size:12.3px;color:var(--muted);margin-top:4px}
+.kb-row .ops{display:flex;gap:6px;margin-top:8px}
+.kb-confirm{background:#f7f9f7;border:1px solid var(--line);border-radius:8px;margin-top:9px;padding:10px 12px;font-size:13px}
+.kb-confirm select,.kb-confirm textarea,.kb-confirm input{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit}
+.kb-empty{padding:40px;text-align:center;color:var(--muted);font-size:13.5px}
+.kb-log{margin:4px 14px 16px;border:1px solid var(--line);border-radius:10px;background:#f8faf8;font-size:12.5px}
+.kb-log summary{padding:9px 13px;cursor:pointer;color:var(--muted)}
+.kb-log .logs{padding:2px 14px 10px;max-height:150px;overflow-y:auto}
+.kb-log .logs div{padding:3px 0;border-bottom:1px dashed #e6ebe6;color:#4a564d}
+
+/* 未答问题演示 */
+.un-row{border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:0 14px 9px;background:#fff}
+.un-row .r1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.un-row .q{font-weight:600;flex:1;min-width:220px;font-size:14px}
+.un-row .m{font-size:12.3px;color:var(--muted);margin-top:4px}
+.un-row .ops{display:flex;gap:6px;margin-top:8px}
+.un-form{background:#f7f9f7;border:1px solid var(--line);border-radius:8px;margin-top:9px;padding:10px 12px;font-size:13px}
+.un-form label{font-size:12.5px;color:var(--muted)}
+.un-form input,.un-form textarea,.un-form select{width:100%;margin-top:4px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;font-family:inherit}
+.un-form textarea{min-height:64px}
+.un-empty{margin:12px 14px 18px;padding:34px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;font-size:13.5px}
+
+/* 状态机图 */
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0;padding:16px;background:#f8faf8;border:1px solid var(--line);border-radius:12px}
+.flow .node{border:2px solid var(--primary);color:var(--primary-deep);background:#fff;border-radius:10px;padding:6px 16px;font-weight:700;font-size:13.5px}
+.flow .node.gray{border-color:#aab4ab;color:var(--gray)}
+.flow .node.red{border-color:var(--red);color:var(--red)}
+.flow .arr{color:var(--muted);font-size:12.5px}
+.flow .arr b{color:var(--ink)}
+
+/* 弹层/抽屉 */
+.overlay{position:fixed;inset:0;background:rgba(20,30,24,.35);z-index:100;display:none}
+.overlay.show{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:92vw;background:#fff;z-index:101;
+  box-shadow:-8px 0 30px rgba(31,45,36,.18);transform:translateX(105%);transition:.25s;overflow-y:auto;padding:22px 24px}
+.drawer.show{transform:none}
+.drawer h3{margin-top:0}
+.f-item{margin-bottom:13px}
+.f-item label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.f-item label .req{color:var(--red)}
+.f-item input,.f-item select,.f-item textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:inherit}
+.f-item textarea{min-height:88px}
+.f-item .err{color:var(--red);font-size:12px;margin-top:3px;display:none}
+.f-item.bad input,.f-item.bad select,.f-item.bad textarea{border-color:var(--red)}
+.f-item.bad .err{display:block}
+.drawer .acts{display:flex;gap:8px;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:9px 20px;border-radius:999px;font-size:13.5px;
+  opacity:0;pointer-events:none;transition:.25s;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+footer.doc-foot{padding:30px 0 50px;color:var(--muted);font-size:13px;text-align:center}
+@media (max-width:820px){
+  .qa-app{grid-template-columns:1fr}
+  .qa-side{display:none}
+  section.card{padding:24px 18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 头部 ================= -->
+<div class="doc-hero">
+  <div class="wrap">
+    <div class="kicker">PRODUCT REQUIREMENTS DOCUMENT · 需求梳理稿</div>
+    <h1>乡村智能问答系统 · 产品需求文档</h1>
+    <p class="sub">面向村干部及基层工作人员的 Web 端智能问答工作台：把官方政策和办事流程沉淀为可信赖的知识库，让基层人员在接待村民咨询时"一问即答、答有依据、答不了可闭环"。</p>
+    <div class="meta-chips">
+      <span class="meta-chip">版本 v0.2（待评审 · 待定项已全部决议）</span>
+      <span class="meta-chip">日期 2026-10-13</span>
+      <span class="meta-chip">形态：Web 网页</span>
+      <span class="meta-chip">用户：村干部 / 基层工作人员</span>
+      <span class="meta-chip">背景：政府 / 村集体项目</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 目录 ================= -->
+<nav class="toc">
+  <div class="wrap">
+    <a href="#s1">1 背景与目标</a>
+    <a href="#s2">2 产品契约</a>
+    <a href="#s3">3 范围</a>
+    <a href="#s4">4 角色与对象</a>
+    <a href="#s5">5 功能需求</a>
+    <a href="#s6">6 共享规则</a>
+    <a href="#s7">7 约束与合规</a>
+    <a href="#s8">8 决议与假设</a>
+    <a href="#s9">9 术语表</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= 1 背景与目标 ================= -->
+<section class="card" id="s1">
+  <h2><span class="no">1</span>背景与目标</h2>
+  <p class="sec-lead">为什么做、为谁做、做到什么程度算成功。</p>
+
+  <h3>1.1 已确认的关键决策（来自需求沟通）</h3>
+  <table>
+    <tr><th>决策项</th><th>结论</th><th>对需求的影响</th></tr>
+    <tr><td>目标用户</td><td><b>村干部 / 基层人员</b>（工作辅助工具，帮他们答复村民、查政策依据）</td><td>系统不直接面向村民提问；核心场景是"接待中的工作台"</td></tr>
+    <tr><td>内容领域</td><td><b>村务与办事指南</b> + <b>综合生活服务</b></td><td>知识库分类、示例内容围绕这两类组织；不覆盖深度农技咨询 <span class="chip tbd">P1 再评估</span></td></tr>
+    <tr><td>产品形态</td><td><b>Web 网页</b></td><td>按桌面浏览器场景设计；移动端自适应列为 P1</td></tr>
+    <tr><td>项目背景</td><td><b>政府 / 村集体项目</b></td><td>需要账号留痕、内容权威性、审计与合规规则</td></tr>
+  </table>
+  <div class="note">v0.2 补充：其余关键决策已于同日确认（单村试点 / 村委会办公电脑 + 大模型 API 接入 / 管理员录入·定位企业知识库级系统 / 聚合可手动拆分 / 记录保留 1 年 / 自建账号），决议记录见 8.1。</div>
+
+  <h3>1.2 问题链与产品决策</h3>
+  <p><b>观察到的问题（定性，来自建设方描述，未做量化调研 <span class="chip asm">假设</span>）：</b></p>
+  <ul>
+    <li>村民咨询高频发生在村委日常接待（办事流程、惠民政策、生活服务），基层人员难以全部掌握，常需翻文件、电话请教乡镇，<b>答复慢</b>；</li>
+    <li>上级政策文件多、更新快，不同干部答复可能出现<b>口径不一</b>；</li>
+    <li>答复经验存在个人脑子里，<b>人员流动导致能力流失</b>，新人上手慢。</li>
+  </ul>
+  <p>→ <b>产品决策：</b>做一个面向基层工作人员的 Web 问答工作台，答案统一锚定由管理方维护的官方知识库，答不了的问题自动记录并由管理员补充，形成"越用越全"的闭环。</p>
+  <p>→ <b>系统定位（已确认）：</b>本质上是一个<b>"企业知识库级别"的系统</b>——村级组织的官方知识库 + 智能问答界面。轻量务实：部署在村委会办公电脑、通过大模型 API 接入、自建账号体系，不对接政务平台，不按"政务大系统"的标准做重。</p>
+
+  <h3>1.3 目标（以可观察行为表述，不设虚构指标）</h3>
+  <ul>
+    <li>对知识库已覆盖的问题，工作人员<b>一次提问即可获得带官方依据的答案</b>，当场答复村民，无需翻查文件或电话请示；</li>
+    <li>同一问题在全村/辖区范围内<b>口径一致</b>（同一知识来源、同一版本）；</li>
+    <li>暂时答不了的问题被<b>自动记录为未答问题</b>，管理员补充后即可回答（可观察：未答问题清单随使用递增、处理后命中率提升）；</li>
+    <li>新入职/新轮岗人员可通过<b>自助提问完成业务熟悉</b>，不依赖老同志传帮带。</li>
+  </ul>
+</section>
+
+<!-- ================= 2 产品契约 ================= -->
+<section class="card" id="s2">
+  <h2><span class="no">2</span>产品契约</h2>
+  <p class="sec-lead">一句话说清谁、在什么时刻、来做什么、做到什么算完成、凭什么信任它。</p>
+  <table>
+    <tr><th style="width:110px">要素</th><th>定义</th></tr>
+    <tr><td><b>主要用户</b></td><td>村干部及基层工作人员：村两委成员、网格员、驻村工作队员、便民服务窗口人员（下文统称<b>工作人员</b>）</td></tr>
+    <tr><td><b>核心任务</b></td><td>在接待村民咨询的现场，快速获得有官方依据、口径统一的标准答案，并据此答复村民</td></tr>
+    <tr><td><b>触发时刻</b></td><td>村民当面/电话/微信提出咨询，工作人员不能立即给出准确答复（或需要确认政策依据、最新口径）</td></tr>
+    <tr><td><b>完成证据</b></td><td>工作人员在系统内提问后，得到<b>带引用来源卡片的答案</b>（含条目标题、依据文件、发布单位、更新时间），可据此向村民复述</td></tr>
+    <tr><td><b>共享对象</b></td><td>① <b>知识条目</b>：管理员维护、全体工作人员消费；② <b>问答记录</b>：工作人员产生、管理员复盘（用于发现知识缺口）</td></tr>
+    <tr><td><b>信任基础</b></td><td>所有答案必须锚定"已发布"的官方知识条目并展示来源；<b>无法可靠回答时明确说"暂无可靠答案"</b>并给出转办建议，绝不编造答案——这是本系统不可妥协的底线规则（详见 6.1）</td></tr>
+  </table>
+</section>
+
+<!-- ================= 3 范围 ================= -->
+<section class="card" id="s3">
+  <h2><span class="no">3</span>范围</h2>
+  <p class="sec-lead">P0 = 最小但完整的一次问答闭环，外加它的恢复路径。</p>
+
+  <h3>3.1 P0 最小闭环</h3>
+  <ol>
+    <li><b>进入：</b>管理员创建账号并下发；工作人员用账号登录系统（FR-05）；</li>
+    <li><b>备料：</b>管理员录入并发布首批官方知识条目（FR-03，上线前置条件；内容由管理员录入——已确认，见 8.1；首批内容量目标实施期确认 <span class="chip tbd">TBD</span>）；</li>
+    <li><b>主流程：</b>工作人员用自然语言提问（FR-01）；</li>
+    <li><b>完成证据：</b>命中时，返回带引用来源的答案，工作人员据此当场答复村民；答案与记录均留在"问答记录"中可回溯（FR-02）；</li>
+    <li><b>恢复路径：</b>未命中时，明确提示"暂无可靠答案"+ 相关条目 + 转办建议，该问题自动进入"未答问题清单"（FR-01 未命中规则 → FR-04）；</li>
+    <li><b>闭环：</b>管理员处理未答问题、补充并发布条目，此后同类问题可回答（FR-03 / FR-04）。</li>
+  </ol>
+  <div class="note">登录、账号管理虽然常规，但在本项目中参与核心闭环（政务实名使用与留痕要求），故纳入 P0，但仅做轻量实现（见 FR-05），不做组织架构、多级审批等重功能。</div>
+
+  <h3>3.2 P1（首版之后的增强，本期不承诺）</h3>
+  <ul>
+    <li>常用问题<b>收藏</b>与快捷提问模板；</li>
+    <li><b>数据看板</b>：提问量、命中率、高频未答问题、条目"无用"反馈排行；</li>
+    <li><b>移动端自适应</b>（Web 响应式，非独立 App）；</li>
+    <li>敏感类别/关键词库由管理员自助维护（P0 使用内置默认类别，见 6.3）；</li>
+    <li>问答记录导出、乡镇—村多级组织与知识库分区、条目批量导入。</li>
+  </ul>
+
+  <h3>3.3 明确不做（本期排除，避免范围争议）</h3>
+  <ul>
+    <li><b>村民直接提问的入口</b>（村民仅通过工作人员间接受益；村民端列为后续迭代候选 <span class="chip tbd">TBD</span>）；</li>
+    <li><b>在线办事办理</b>（本系统只回答"怎么办"，不承接"替你办"，不与审批系统对接）；</li>
+    <li>独立 App / 小程序（本期仅 Web）；</li>
+    <li>与政务统一身份认证、政务审批等既有平台的对接（已确认自建账号，见 8.1）；</li>
+    <li>主动推送、智能外呼、消息通知体系；</li>
+    <li>深度农技咨询（病虫害诊断等，属专业农技服务范畴 <span class="chip asm">假设</span>，P1 视试点效果再评估）。</li>
+  </ul>
+</section>
+
+<!-- ================= 4 角色与对象 ================= -->
+<section class="card" id="s4">
+  <h2><span class="no">4</span>角色与对象模型</h2>
+  <p class="sec-lead">两类角色、三个核心对象，一张权限矩阵说清楚。</p>
+
+  <h3>4.1 角色定义</h3>
+  <ul>
+    <li><b>工作人员</b>：提问、查看自己的问答记录、对答案反馈"有用/无用"。含村两委成员、网格员、驻村队员、窗口人员；</li>
+    <li><b>管理员</b>：知识条目的增改与发布/下线、未答问题处理、账号管理、查看全部问答记录与反馈。<span class="chip asm">假设</span> 由村委会指定 1–2 名（如村文书、便民服务负责人），具体人选 <span class="chip tbd">TBD</span>（单村试点，见 8.1）。</li>
+  </ul>
+
+  <h3>4.2 权限矩阵（全文档唯一定义，功能节引用不再重复）</h3>
+  <table>
+    <tr><th>能力</th><th>工作人员</th><th>管理员</th></tr>
+    <tr><td>提问、查看答案与引用来源</td><td>✓</td><td>✓</td></tr>
+    <tr><td>查看问答记录</td><td>仅本人</td><td>全部（复盘用）</td></tr>
+    <tr><td>删除问答记录</td><td>—（留痕要求，任何人不可删，见 6.4）</td><td>—</td></tr>
+    <tr><td>答案反馈（有用/无用）</td><td>✓</td><td>✓</td></tr>
+    <tr><td>知识条目新增/编辑</td><td>—</td><td>✓</td></tr>
+    <tr><td>知识条目发布/下线</td><td>—</td><td>✓</td></tr>
+    <tr><td>未答问题处理（补充/关闭）</td><td>—</td><td>✓</td></tr>
+    <tr><td>账号创建/停用/重置密码</td><td>—</td><td>✓</td></tr>
+  </table>
+
+  <h3>4.3 核心对象与状态</h3>
+  <h4>① 知识条目（唯一答案来源）</h4>
+  <div class="flow">
+    <span class="node gray">草稿</span>
+    <span class="arr">—发布→</span>
+    <span class="node">已发布</span>
+    <span class="arr">—手动下线→</span>
+    <span class="node gray">已下线</span>
+    <span class="arr">—重新发布→</span>
+    <span class="node">已发布</span>
+  </div>
+  <div class="flow">
+    <span class="node">已发布</span>
+    <span class="arr">—到达<b>失效日期</b>（自动）→</span>
+    <span class="node red">已过期（自动下线）</span>
+    <span class="arr">—管理员更新后重新发布→</span>
+    <span class="node">已发布</span>
+  </div>
+  <ul>
+    <li><b>编辑不改变状态</b>：已发布条目可直接编辑保存，保存后仍为已发布，系统记录修改人与时间（留痕）；</li>
+    <li><b>到期自动下线而非仅提示</b>：过期政策继续被引用的风险大于知识短暂缺失的风险（产品判断）；管理端以"已过期"标记提醒管理员更新；</li>
+    <li>草稿、已下线、已过期条目<b>一律不参与问答</b>。</li>
+  </ul>
+
+  <h4>② 问答记录</h4>
+  <ul>
+    <li>回答状态：<span class="chip hit">已回答（命中）</span> / <span class="chip miss">未命中</span> / <span class="chip off">超出范围（敏感）</span>；</li>
+    <li>反馈状态：<span class="chip draft">未评价</span> / <span class="chip done">有用</span> / <span class="chip miss">无用</span>（仅"已回答"记录可反馈，反馈后可更改）。</li>
+  </ul>
+
+  <h4>③ 未答问题（仅由"未命中"记录生成，敏感类除外）</h4>
+  <ul>
+    <li>状态：<span class="chip pend">待处理</span> → <span class="chip done">已补充</span>（新条目发布后自动标记，并双向关联）/ <span class="chip closed">已关闭</span>（必填关闭原因）；</li>
+    <li>相似问题自动聚合计数，<b>管理员可对误聚合的问题手动拆分</b>（已确认，见 8.1）；聚合算法口径 <span class="chip asm">假设</span> 由技术设计阶段确定。</li>
+  </ul>
+</section>
+
+<!-- ================= 5 功能需求 ================= -->
+<section class="card" id="s5">
+  <h2><span class="no">5</span>功能需求</h2>
+  <p class="sec-lead">本文档的主体。每个模块覆盖：目的 / 触发 / 处理规则 / 结果与状态 / 字段 / 异常。交互重的 P0 模块内嵌可点击演示（演示数据均为虚构示例，仅用于评审行为，不代表最终视觉稿）。</p>
+
+  <!-- ============ FR-01 ============ -->
+  <h3>FR-01 智能问答（核心）</h3>
+  <p><b>目的：</b>工作人员用自然语言提问，立即获得有官方依据的标准答案，支撑当场答复村民。</p>
+  <p><b>触发：</b>任何已登录工作人员，在提问框输入问题并提交，或点击示例/收藏问题。</p>
+
+  <h4>处理规则</h4>
+  <ol>
+    <li>系统<b>仅基于"已发布"状态的知识条目</b>组织答案（草稿/已下线/已过期不参与）；</li>
+    <li><b>命中</b>（存在高相关已发布条目）时，答案卡片固定包含三部分：
+      <ul>
+        <li>① 答案正文：直接回应问题，分点陈述；</li>
+        <li>② 引用来源卡片：条目标题、依据文件名、发布单位、条目最后核实时间；</li>
+        <li>③ 时效提示行：如"以上内容更新于 {时间}，请以最新官方发布为准"。</li>
+      </ul>
+    </li>
+    <li><b>未命中</b>（无高相关已发布条目，或依据不足以给出可靠结论）时，展示兜底卡片：
+      <ul>
+        <li>明确文案"暂无可靠答案"（不允许给出模糊猜测）；</li>
+        <li>最多展示 3 条相关已发布条目（如有）供工作人员自行查看；</li>
+        <li>转办建议：建议向对应的乡镇部门咨询（按问题类别给出建议部门 <span class="chip asm">假设</span>：初始按分类映射，如惠民政策→民政/社保窗口）；</li>
+        <li>提示"该问题已自动记录，管理员将补充知识条目"。</li>
+      </ul>
+    </li>
+    <li><b>敏感问题拦截</b>：命中敏感类别（见 6.3）时不作答，展示建议渠道（司法所/卫生院/纪检监察等）与"本回答不构成专业意见"提示。敏感问题生成"超出范围"记录，<b>不进入未答问题清单</b>（避免污染知识缺口列表）；</li>
+    <li>输入框提示文案："请勿输入村民姓名、身份证号等个人敏感信息"（合规要求，见 7.2）。</li>
+  </ol>
+
+  <p><b>结果与状态变化：</b>每次提问生成一条问答记录（已回答 / 未命中 / 超出范围）；未命中记录自动进入未答问题清单（FR-04）。</p>
+
+  <h4>字段</h4>
+  <table>
+    <tr><th>字段</th><th>规则</th></tr>
+    <tr><td>问题文本</td><td>必填，≤500 字，超出前端即时提示并阻止提交</td></tr>
+    <tr><td>答案正文</td><td>系统生成，仅命中时存在</td></tr>
+    <tr><td>引用来源</td><td>系统生成，随答案展示，必含四个要素（见规则 2）</td></tr>
+    <tr><td>反馈</td><td>未评价（默认）/ 有用 / 无用，仅工作人员本人可评</td></tr>
+  </table>
+
+  <h4>异常</h4>
+  <ul>
+    <li>输入为空：提交按钮不可用；</li>
+    <li>知识库为空（首批条目未发布）：<b>空态提示</b>"知识库正在建设中"，提问仍可用，全部进入未命中流程（保证未答问题照常记录）；</li>
+    <li>答案生成失败/超时：展示重试按钮，<b>不产生半成品问答记录</b>（重试成功才落库，见 6.5）；</li>
+    <li>同一问题短时间重复提问：正常受理并各自记录（不做合并，由未答问题清单聚合）。</li>
+  </ul>
+
+  <h4>交互演示（FR-01 + FR-02）</h4>
+  <div class="win">
+    <div class="win-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="win-title">demo-01 · 智能问答：命中 / 未命中 / 敏感拦截 三种状态 + 右侧问答记录</span></div>
+    <div class="win-note">⚠ 演示环境：数据与政策口径均为虚构示例，仅用于评审交互行为。可点击灰色示例问题，或自行输入后回车。</div>
+    <div class="qa-app">
+      <div class="qa-main">
+        <div class="qa-head">乡村智能问答助手 · 当前登录：<b>王网格员（演示）</b> · 知识库更新提示：共 11 条已收录条目（演示数据）</div>
+        <div class="qa-chat" id="qaChat">
+          <div class="qa-row"><div class="bubble ai">
+            <div class="b-title">您好，请描述要咨询的问题</div>
+            <div>支持自然语言提问，例如："低保申请需要哪些材料"。答案均附官方依据，供您向村民答复时引用。</div>
+            <div class="qa-chips">
+              <span class="q-chip" onclick="qaAsk('低保申请需要哪些材料？')">低保申请需要哪些材料？</span>
+              <span class="q-chip" onclick="qaAsk('宅基地建房审批流程是什么？')">宅基地建房审批流程？</span>
+              <span class="q-chip" onclick="qaAsk('明年大豆补贴标准是多少？')">明年大豆补贴标准？</span>
+              <span class="q-chip" onclick="qaAsk('邻居欠钱不还，想咨询怎么起诉')">邻居欠钱想起诉？</span>
+            </div>
+          </div></div>
+        </div>
+        <div class="qa-input">
+          <input id="qaInput" maxlength="500" placeholder="请输入问题（请勿输入村民个人敏感信息）" onkeydown="if(event.key==='Enter')qaAskFromInput()">
+          <button class="btn primary" onclick="qaAskFromInput()">提问</button>
+        </div>
+      </div>
+      <div class="qa-side">
+        <div class="hd">我的问答记录</div>
+        <div class="qa-hist" id="qaHist"><div class="hist-empty">暂无记录<br>提问后会自动留痕</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FR-02 ============ -->
+  <h3>FR-02 问答记录与反馈</h3>
+  <p><b>目的：</b>工作人员可回溯历史问答（村民追问时复查口径）；反馈数据支撑管理员发现过期、错误条目。</p>
+  <p><b>触发：</b>工作人员进入"问答记录"页（演示中为问答界面的右侧栏）。</p>
+  <h4>处理规则</h4>
+  <ol>
+    <li>列表按提问时间倒序：问题摘要、回答状态（已回答/未命中/超出范围）、反馈状态、提问时间；</li>
+    <li>点击记录查看完整答案与引用来源；</li>
+    <li>反馈：仅"已回答"记录可评"有用/无用"，评价后可更改；"未命中"记录不提供反馈（其价值由 FR-04 承接）；</li>
+    <li><b>记录不可删除、不可编辑</b>（政务留痕要求，见 6.4）；</li>
+    <li>管理员可查看全部人员的记录与反馈，用于复盘（权限见 4.2 矩阵）。</li>
+  </ol>
+  <p><b>异常：</b>无记录时展示空态并引导提问（演示右侧栏初始状态即空态）。</p>
+
+  <!-- ============ FR-03 ============ -->
+  <h3>FR-03 知识库管理（管理员）</h3>
+  <p><b>目的：</b>保证"答有依据"——管理员维护官方知识条目，控制发布、时效与下线。知识库质量直接决定系统可信度，故与问答同为 P0。</p>
+  <p><b>触发：</b>管理员登录后进入"知识库管理"。</p>
+  <h4>处理规则</h4>
+  <ol>
+    <li><b>新增</b>：填写字段（见下表），保存为草稿；</li>
+    <li><b>发布</b>：草稿/已下线/已过期条目均可发布，发布时校验必填字段；发布即时对全体问答生效；</li>
+    <li><b>编辑</b>：任何状态均可编辑；已发布条目保存后<b>保持已发布状态</b>，记录修改人与时间（留痕）；</li>
+    <li><b>下线</b>：仅已发布条目可下线；下线原因必填（预设选项：政策已更新 / 内容有误 / 其他 + 补充说明）；</li>
+    <li><b>有效期</b>：条目可填失效日期；到期<b>自动下线</b>并在管理端标为"已过期"，提示管理员更新；</li>
+    <li><b>重复提示</b>：新增条目与已有已发布条目标题高度相似时，提示"是否为原条目的更新版本"，引导编辑原条目而非新建重复条目（口径唯一）；</li>
+    <li><b>留痕</b>：新增、编辑、发布、下线均记录操作人、时间、动作，管理员可查（操作日志）。</li>
+  </ol>
+  <h4>条目字段</h4>
+  <table>
+    <tr><th>字段</th><th>必填</th><th>规则</th></tr>
+    <tr><td>标题</td><td>✓</td><td>全局唯一；与已有已发布条目高度相似时触发重复提示</td></tr>
+    <tr><td>分类</td><td>✓</td><td>单选：办事流程 / 惠民政策 / 村务公开 / 生活服务</td></tr>
+    <tr><td>正文</td><td>✓</td><td>支持分点；面向工作人员直接引用给村民的口径撰写</td></tr>
+    <tr><td>依据文件名</td><td>✓</td><td>官方文件名（含文号如有）——无官方依据的内容不允许入库</td></tr>
+    <tr><td>发布单位</td><td>✓</td><td>该依据文件的发文机关</td></tr>
+    <tr><td>失效日期</td><td>—</td><td>可选；到期自动下线并标"已过期"</td></tr>
+    <tr><td>标签</td><td>—</td><td>可选，多个，用于检索命中</td></tr>
+    <tr><td>状态 / 最后核实时间 / 操作留痕</td><td>系统</td><td>状态见 4.3①；每次编辑刷新"最后核实时间"</td></tr>
+  </table>
+  <h4>异常</h4>
+  <ul>
+    <li>必填缺失：阻断保存/发布并逐项定位提示（见演示表单校验）；</li>
+    <li>标题重复：阻断并提示编辑原条目；</li>
+    <li>无依据文件：阻断保存与发布（知识库仅收录有官方依据的内容，草稿也不例外）。</li>
+  </ul>
+
+  <h4>交互演示（FR-03）</h4>
+  <div class="win">
+    <div class="win-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="win-title">demo-02 · 知识库管理：筛选 / 新增（表单校验）/ 发布 / 下线（原因必填）/ 留痕</span></div>
+    <div class="win-note">⚠ 演示环境：条目均为虚构示例。试试：① 点各状态筛选 ② "新增条目"空提交看校验 ③ 对"草稿"条目点"发布" ④ 对已发布条目点"下线"（原因必填）。</div>
+    <div class="kb-toolbar">
+      <span id="kbFilters" style="display:flex;gap:8px;flex-wrap:wrap"></span>
+      <span style="flex:1"></span>
+      <button class="btn primary sm" onclick="kbOpenDrawer('add')">＋ 新增条目</button>
+    </div>
+    <div class="kb-list" id="kbList"></div>
+    <div style="height:12px"></div>
+    <details class="kb-log" open>
+      <summary>操作留痕（所有新增 / 编辑 / 发布 / 下线均记录，管理员可查）</summary>
+      <div class="logs" id="kbLog"></div>
+    </details>
+  </div>
+
+  <!-- ============ FR-04 ============ -->
+  <h3>FR-04 未答问题处理（管理员）—— 系统自我修复闭环</h3>
+  <p><b>目的：</b>未命中问题是最真实的知识缺口信号。管理员据此补充知识库，使系统"越用越全"。</p>
+  <p><b>触发：</b>管理员进入"未答问题"列表。</p>
+  <h4>处理规则</h4>
+  <ol>
+    <li>列表展示：问题、发生时间、聚合次数（相似问题合并计数 <span class="chip asm">假设</span>）、状态（待处理 / 已补充 / 已关闭）；</li>
+    <li><b>去补充</b>：跳转新增条目表单并带入该问题作为参考；保存草稿后条目仍为草稿，<b>条目发布后</b>该未答问题自动标记"已补充"，并与新条目双向关联；</li>
+    <li><b>关闭</b>：不属于服务范围的问题（如"帮我写诉状"）可关闭，关闭原因必填（预设选项：超出服务范围 / 属线下办理事项 / 其他 + 说明）；</li>
+    <li>敏感类"超出范围"记录不进入本清单（见 FR-01 规则 4）；</li>
+    <li><b>聚合与拆分：</b>相似的未命中问题自动聚合计数；管理员可对误聚合的问题手动拆分，拆分后各自独立计数（已确认，见 8.1）。</li>
+  </ol>
+  <p><b>异常：</b>清单为空时展示空态"暂无待处理问题"。</p>
+
+  <h4>交互演示（FR-04）</h4>
+  <div class="win">
+    <div class="win-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="win-title">demo-03 · 未答问题处理：去补充（发布后标记已补充）/ 关闭（原因必填）</span></div>
+    <div class="win-note">⚠ 演示环境：第 1 条与 demo-01 中"明年大豆补贴"呼应。试试：① 对待处理问题点"去补充"→ 填写后"保存并发布" ② 点"关闭"选原因。</div>
+    <div style="height:12px"></div>
+    <div id="unList"></div>
+    <div class="un-empty" id="unEmpty" style="display:none">暂无待处理问题 —— 知识缺口都补上了，做得好！</div>
+    <div style="height:14px"></div>
+  </div>
+
+  <!-- ============ FR-05 ============ -->
+  <h3>FR-05 账号与登录（轻量）</h3>
+  <p><b>目的：</b>满足政务实名使用与留痕要求；不追求复杂组织能力。</p>
+  <h4>处理规则</h4>
+  <ol>
+    <li>账号由管理员创建：姓名、所属村/部门（仅作展示信息 <span class="chip asm">假设</span>，本期单组织部署，无组织树）、角色（工作人员/管理员）；</li>
+    <li>初始密码由系统生成并交管理员线下转交，<b>首次登录强制修改密码</b> <span class="chip asm">假设</span>；</li>
+    <li>登录方式：账号 + 密码；连续 5 次失败临时锁定 15 分钟 <span class="chip asm">假设</span>（阈值可在部署时调整）；</li>
+    <li>管理员可为人员停用账号（人员离职/轮岗）、重置密码；停用账号的问答记录保留（留痕）；</li>
+    <li><b>不对接政务统一身份认证</b>：使用本系统自建账号体系（已确认，见 8.1）；账号管理能力保留在本模块。</li>
+  </ol>
+</section>
+
+<!-- ================= 6 共享规则 ================= -->
+<section class="card" id="s6">
+  <h2><span class="no">6</span>共享规则与异常（唯一定义，各功能节引用）</h2>
+
+  <h3>6.1 引用溯源规则（信任底线）</h3>
+  <ul>
+    <li>每条"已回答"答案必须携带引用来源卡片，四要素缺一不可：条目标题、依据文件名、发布单位、最后核实时间；</li>
+    <li><b>无来源不构成答案</b>：依据不足时一律走"未命中"兜底，禁止输出无引用的结论性内容；</li>
+    <li>每条答案附"以最新官方发布为准"的时效提示。</li>
+  </ul>
+
+  <h3>6.2 未命中兜底规则</h3>
+  <ul>
+    <li>兜底三要素：明确"暂无可靠答案" + 相关条目（≤3 条）+ 转办建议；</li>
+    <li>兜底必须提示"该问题已自动记录"，未命中记录自动进入未答问题清单（FR-04）；</li>
+    <li>转办建议按分类映射到建议部门 <span class="chip asm">假设</span>，映射表由管理方在实施期确认 <span class="chip tbd">TBD</span>。</li>
+  </ul>
+
+  <h3>6.3 敏感问题规则</h3>
+  <ul>
+    <li>P0 内置默认类别：① 涉法涉诉（起诉、纠纷裁决等）② 医疗诊断 ③ 信访举报 ④ 涉及资金往来的个人决策（如借贷担保）；</li>
+    <li>命中敏感类别：不作答、给出对应建议渠道（司法所 / 12348 法律援助 / 卫生院 / 纪检监察渠道）+"本回答不构成专业意见"提示；</li>
+    <li>记录状态"超出范围"，<b>不进入未答问题清单</b>；管理员可按月导出查看（是否需上报处置流程 <span class="chip tbd">TBD</span>）；</li>
+    <li>敏感类别/关键词的自助维护为 P1（P0 固化默认清单）。</li>
+  </ul>
+
+  <h3>6.4 留痕与保留规则</h3>
+  <ul>
+    <li>问答记录、知识库操作（新增/编辑/发布/下线）、账号操作（创建/停用/重置）全部留痕，含操作人、时间、动作；</li>
+    <li>任何角色不可删除/篡改问答记录；</li>
+    <li>保留期限：<b>1 年</b>（已确认，见 8.1）；到期后的归档导出与清除细则实施期确认 <span class="chip tbd">TBD</span>。</li>
+  </ul>
+
+  <h3>6.5 服务异常共享规则</h3>
+  <ul>
+    <li>答案生成、保存等操作失败时统一展示重试入口；<b>失败不落库</b>，成功才生成记录（防止半成品记录污染留痕与未答清单）；</li>
+    <li>本 PRD 不承诺具体性能指标（响应时间、并发数）<span class="chip tbd">TBD</span>，由技术设计阶段与部署环境确定后补充验收口径。</li>
+  </ul>
+</section>
+
+<!-- ================= 7 约束与合规 ================= -->
+<section class="card" id="s7">
+  <h2><span class="no">7</span>约束与合规</h2>
+  <table>
+    <tr><th>约束</th><th>规则 / 待定项</th></tr>
+    <tr><td>内容权威性（规则）</td><td>知识库仅收录有官方依据的内容（政策文件、部门通知、村民代表大会决议等）；无依据内容禁止发布</td></tr>
+    <tr><td>个人信息保护（规则）</td><td>界面明示"请勿输入村民个人敏感信息"；问答记录如仍含个人信息，仅本人与管理员可见（见 4.2）</td></tr>
+    <tr><td>部署环境（已确认）</td><td>村委会办公室的<b>普通办公电脑</b>、常规网络环境；无政务专网或专有硬件要求，按轻量级 Web 应用部署运维</td></tr>
+    <tr><td>大模型接入（已确认）</td><td>通过<b>大模型 API</b> 接入云端服务，不做本地化部署。<b>数据边界约束：</b>问答内容将经 API 传输至模型服务商，须选用合规的大模型服务并签署数据协议（服务商选择与协议条款实施期确认 <span class="chip tbd">TBD</span>）；"禁止输入个人敏感信息"升级为强约束（见 7.2 个人信息保护）；答案仍必须锚定本村知识库，模型不得脱离知识条目作答</td></tr>
+    <tr><td>试点范围（已确认）</td><td><b>单村试点</b>；账号规模约 20–50 人 <span class="chip asm">假设</span>，知识库以村为单位，不做分区</td></tr>
+    <tr><td>验收依据</td><td>按"可观察目标"（1.3）组织验收演示：命中场景、未命中兜底、补充闭环三个剧本；具体量化验收标准未定 <span class="chip tbd">TBD</span></td></tr>
+  </table>
+</section>
+
+<!-- ================= 8 待定与假设 ================= -->
+<section class="card" id="s8">
+  <h2><span class="no">8</span>决议、待定与假设汇总</h2>
+  <p class="sec-lead">v0.2：全部关键决策已确认（8.1）；剩余待定均可在实施期确认、不阻塞评审（8.2）；关键假设见 8.3。</p>
+
+  <h3>8.1 已决议事项（2026-10-13，v0.2）</h3>
+  <table>
+    <tr><th>#</th><th>决议项</th><th>决议结果</th><th>影响章节</th></tr>
+    <tr><td>1</td><td>试点范围</td><td><b>单村试点</b></td><td>7 / 8.3</td></tr>
+    <tr><td>2</td><td>部署环境</td><td>村委会办公室<b>普通办公电脑</b>、常规网络环境，轻量级 Web 部署</td><td>7</td></tr>
+    <tr><td>3</td><td>大模型接入方式</td><td>通过<b>大模型 API</b> 连接云端服务，不做本地化部署</td><td>7</td></tr>
+    <tr><td>4</td><td>系统定位</td><td>本质为<b>企业知识库级别的系统</b>：村级知识库 + 智能问答界面，轻量务实</td><td>1.2</td></tr>
+    <tr><td>5</td><td>首批知识内容</td><td>由<b>管理员录入</b>（不依赖乡镇各部门集中供文）</td><td>3.1</td></tr>
+    <tr><td>6</td><td>未答问题聚合</td><td>相似问题自动聚合，<b>管理员可手动拆分</b></td><td>4.3 / FR-04</td></tr>
+    <tr><td>7</td><td>问答记录保留</td><td><b>1 年</b></td><td>6.4</td></tr>
+    <tr><td>8</td><td>账号体系</td><td>使用<b>本系统自建账号</b>，不对接政务统一身份认证</td><td>FR-05 / 3.3</td></tr>
+  </table>
+
+  <h3>8.2 剩余待定（实施期确认，不阻塞评审）</h3>
+  <ul>
+    <li>大模型服务商选择与数据协议条款（见 7）；</li>
+    <li>未答问题"分类 → 建议转办部门"映射表（见 6.2）；</li>
+    <li>敏感问题是否需要上报处置流程（见 6.3）；</li>
+    <li>首批知识条目的数量目标（见 3.1）；</li>
+    <li>问答记录到期后的归档导出与清除细则（见 6.4）；</li>
+    <li>量化验收标准（见 7）。</li>
+  </ul>
+
+  <h3>8.3 关键假设（当前按此推进，待验证）</h3>
+  <ul>
+    <li>答案生成采用"官方知识库 + 大模型 API"方式，具体服务商与调用方案由技术设计阶段确定，本 PRD 不预设实现细节；</li>
+    <li>管理员 1–2 名（由村委会指定，如村文书）；</li>
+    <li>单村账号规模约 20–50 人；</li>
+    <li>知识库初始为空，上线前由管理员录入首批条目；</li>
+    <li>登录失败锁定策略：连续 5 次失败锁定 15 分钟（部署时可调整）；</li>
+    <li>村民不直接使用本系统；敏感类别 P0 固化、P1 开放维护；移动端 P1。</li>
+  </ul>
+</section>
+
+<!-- ================= 9 术语表 ================= -->
+<section class="card" id="s9">
+  <h2><span class="no">9</span>术语表</h2>
+  <table>
+    <tr><th>术语</th><th>定义</th></tr>
+    <tr><td>工作人员</td><td>村干部、网格员、驻村工作队员、便民服务窗口人员等系统使用者的统称</td></tr>
+    <tr><td>管理员</td><td>由建设方指定、负责知识库维护 / 未答问题处理 / 账号管理的角色（1–2 名）</td></tr>
+    <tr><td>知识条目</td><td>管理员维护的官方内容单元，是所有答案的唯一依据</td></tr>
+    <tr><td>命中 / 未命中</td><td>系统能否基于"已发布"条目给出可靠答案的两种结果</td></tr>
+    <tr><td>未答问题</td><td>由"未命中"记录自动生成、进入管理员处理清单的知识缺口信号</td></tr>
+    <tr><td>引用来源</td><td>答案附带的四要素：条目标题、依据文件名、发布单位、最后核实时间</td></tr>
+  </table>
+
+  <h3>版本记录</h3>
+  <table>
+    <tr><th>版本</th><th>日期</th><th>说明</th></tr>
+    <tr><td>v0.1</td><td>2026-10-13</td><td>需求梳理初稿（草稿）。基于需求沟通确认的 4 项决策（用户 / 领域 / 形态 / 背景）产出</td></tr>
+    <tr><td>v0.2</td><td>2026-10-13</td><td>6 项待定问题全部决议（单村试点 / 办公电脑+大模型 API 接入 / 管理员录入·定位企业知识库级系统 / 聚合可手动拆分 / 记录保留 1 年 / 自建账号）；正文对应 TBD 已落定，第 8 节改为决议记录；状态转为"待评审"</td></tr>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+
+<footer class="doc-foot">乡村智能问答系统 · 产品需求文档 v0.1 · 2026-10-13 · 草稿待评审 —— 内嵌演示仅为需求评审用途，非产品实现</footer>
+
+<!-- ============ 抽屉（知识库新增/编辑） ============ -->
+<div class="overlay" id="kbOverlay" onclick="kbCloseDrawer()"></div>
+<aside class="drawer" id="kbDrawer">
+  <h3 id="kbDrawerTitle">新增知识条目</h3>
+  <p style="font-size:12.5px;color:var(--muted);margin-top:0">仅收录有官方依据的内容。无依据文件无法发布。</p>
+  <div class="f-item" id="fTitle"><label>标题 <span class="req">*</span></label>
+    <input id="inTitle" placeholder="如：最低生活保障申请指南"><div class="err">标题必填，且不能与已有条目重复</div></div>
+  <div class="f-item" id="fCat"><label>分类 <span class="req">*</span></label>
+    <select id="inCat"><option value="">请选择</option><option>办事流程</option><option>惠民政策</option><option>村务公开</option><option>生活服务</option></select>
+    <div class="err">分类必选</div></div>
+  <div class="f-item" id="fBody"><label>正文 <span class="req">*</span></label>
+    <textarea id="inBody" placeholder="分点写清口径，供工作人员直接答复村民"></textarea><div class="err">正文必填</div></div>
+  <div class="f-item" id="fFile"><label>依据文件名 <span class="req">*</span></label>
+    <input id="inFile" placeholder="官方文件名（含文号如有）"><div class="err">依据文件名必填（官方权威性要求）</div></div>
+  <div class="f-item" id="fOrg"><label>发布单位 <span class="req">*</span></label>
+    <input id="inOrg" placeholder="发文机关"><div class="err">发布单位必填</div></div>
+  <div class="f-item"><label>失效日期（可选）</label><input id="inExp" type="date"></div>
+  <div class="acts">
+    <button class="btn" id="kbSaveDraft">保存草稿</button>
+    <button class="btn primary" id="kbPublish">保存并发布</button>
+    <button class="btn" onclick="kbCloseDrawer()">取消</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ 通用 ============ */
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
+function now(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
+
+/* ============ Demo 01：智能问答 ============ */
+var qaHistCount=0;
+function qaHistAdd(q,st){
+  var box=document.getElementById('qaHist');
+  if(qaHistCount===0)box.innerHTML='';
+  qaHistCount++;
+  var item=document.createElement('div');item.className='hist-item';
+  item.innerHTML='<div class="q"></div><div class="m"><span>'+now()+'</span></div>';
+  item.querySelector('.q').textContent=q;
+  var stChip=document.createElement('span');stChip.className='chip '+(st==='hit'?'hit':st==='miss'?'miss':'off');
+  stChip.textContent=st==='hit'?'已回答':st==='miss'?'未命中':'超出范围';
+  item.querySelector('.m').appendChild(stChip);
+  box.insertBefore(item,box.firstChild);
+}
+function qaBubble(html,cls){
+  var chat=document.getElementById('qaChat');
+  var row=document.createElement('div');row.className='qa-row '+(cls==='user'?'user':'');
+  row.innerHTML='<div class="bubble '+cls+'">'+html+'</div>';
+  chat.appendChild(row);chat.scrollTop=chat.scrollHeight;return row;
+}
+function qaTyping(){
+  var r=qaBubble('<span class="typing"><span></span><span></span><span></span></span>','ai');
+  return r;
+}
+function qaAnswerCard(a){
+  var srcHtml='<div class="ans-src"><span class="t">引用来源</span> · 条目《'+a.entry+'》<br>依据文件：《'+a.file+'》 · 发布单位：'+a.org+'<br>条目最后核实：'+a.date+'</div>';
+  var foot='<div class="ans-foot">以上内容更新于 '+a.date+'，请以最新官方发布为准。</div>';
+  var fb='<div class="fb-row"><button class="fb-btn" onclick="qaFb(this,1)">👍 有用</button><button class="fb-btn" onclick="qaFb(this,0)">👎 无用</button></div>';
+  return '<div class="b-title">'+a.title+'</div>'+a.body+srcHtml+foot+fb;
+}
+function qaFb(btn,good){
+  var row=btn.parentElement;
+  if(row.dataset.done)return;
+  row.dataset.done='1';
+  [].forEach.call(row.querySelectorAll('.fb-btn'),function(b){b.disabled=true;if(b===btn)b.classList.add('on')});
+  toast(good?'已记录：有用':'已记录：无用');
+}
+function qaMissCard(q){
+  return '<div class="miss-box"><div class="mt">暂无可靠答案</div>'+
+  '<div style="font-size:13px;margin-top:4px">知识库中暂未收录该问题的官方依据，为避免误导村民，不作猜测性回答。</div>'+
+  '<ul><li>相关条目：《耕地地力保护补贴申领指南（示例）》《农业补贴政策常见问答（示例）》</li>'+
+  '<li>转办建议：建议向乡镇农经站或县农业农村局咨询确认</li></ul>'+
+  '<div style="font-size:12.5px;color:#8a6d3b;margin-top:6px">✓ 该问题已自动记录，管理员将补充知识条目</div></div>';
+}
+function qaSensCard(){
+  return '<div class="sens-box"><div class="st">该问题涉及法律纠纷，超出本系统服务范围</div>'+
+  '<div style="font-size:13px;margin-top:4px">建议：携带借条、转账凭证等材料到镇司法所当面咨询，或拨打 <b>12348</b> 法律援助热线；经济困难可申请法律援助。</div>'+
+  '<div style="font-size:12px;color:#a05a50;margin-top:6px">本回答不构成法律意见。该问答已记录（超出范围，不进入知识补充清单）。</div></div>';
+}
+var QA_LIB=[
+  {k:['低保'],a:{title:'低保申请材料清单（示例）',entry:'最低生活保障申请指南',file:'最低生活保障审核确认办法（示例）',org:'县民政局',date:'2026-09-30',
+    body:'申请低保一般需准备：<br>① 书面申请书；<br>② 户主及家庭成员身份证、户口簿复印件；<br>③ 家庭收入证明；<br>④ 残疾证、重病诊断证明等特殊情况证明（如有）。<br>材料交至村委会初审后报乡镇审核。'}},
+  {k:['宅基地','建房'],a:{title:'宅基地建房审批流程（示例）',entry:'宅基地建房审批流程',file:'县农村宅基地管理办法（示例）',org:'县农业农村局',date:'2026-09-12',
+    body:'一般流程：<br>① 农户向村委会提交书面建房申请；<br>② 村委会讨论并公示；<br>③ 乡镇组织现场勘查与审批；<br>④ 按批准的位置和面积建房；<br>⑤ 竣工验收后申请确权登记。'}},
+  {k:['医保','缴费'],a:{title:'城乡居民医保集中缴费（示例）',entry:'城乡居民医保集中缴费指引',file:'县医保局年度缴费通知（示例）',org:'县医保局',date:'2026-09-28',
+    body:'集中缴费期一般为每年 9 月至 12 月（以当年通知为准）。逾期参保可能影响待遇享受等待期，请提醒村民在集中缴费期内完成缴费；特殊人群有资助参保政策，可到窗口咨询。'}}
+];
+function qaAsk(q){
+  if(!q||!q.trim()){toast('请输入问题');return}
+  var userRow=qaBubble(q.replace(/</g,'&lt;'),'user');
+  var typing=qaTyping();
+  qaHistAdd(q,qaResolveType(q));
+  setTimeout(function(){typing.remove();
+    var type=qaResolveType(q);
+    if(type==='hit'){
+      var lib=QA_LIB.filter(function(x){return x.k.some(function(kw){return q.indexOf(kw)>=0})})[0];
+      qaBubble(qaAnswerCard(lib.a),'ai');
+    }else if(type==='sens'){
+      qaBubble(qaSensCard(),'ai');
+    }else{
+      qaBubble(qaMissCard(q),'ai');
+    }
+  },700);
+}
+function qaResolveType(q){
+  if(/起诉|官司|纠纷|欠钱|立案|举报|诊断/.test(q))return 'sens';
+  var hit=QA_LIB.some(function(x){return x.k.some(function(kw){return q.indexOf(kw)>=0})});
+  return hit?'hit':'miss';
+}
+function qaAskFromInput(){
+  var inp=document.getElementById('qaInput');
+  var q=inp.value.trim();if(!q){toast('请输入问题');return}
+  inp.value='';qaAsk(q);
+}
+
+/* ============ Demo 02：知识库管理 ============ */
+var KB=[
+  {id:1,t:'最低生活保障申请指南',cat:'办事流程',file:'最低生活保障审核确认办法',org:'县民政局',st:'pub',date:'2026-09-30'},
+  {id:2,t:'宅基地建房审批流程',cat:'办事流程',file:'县农村宅基地管理办法',org:'县农业农村局',st:'pub',date:'2026-09-12'},
+  {id:3,t:'城乡居民医保集中缴费指引',cat:'惠民政策',file:'县医保局年度缴费通知',org:'县医保局',st:'pub',date:'2026-09-28'},
+  {id:4,t:'耕地地力保护补贴申领指南',cat:'惠民政策',file:'省农业农村厅补贴实施方案',org:'省农业农村厅',st:'pub',date:'2026-08-15'},
+  {id:5,t:'危房改造补助申请流程',cat:'惠民政策',file:'县住建局危改工作文件',org:'县住建局',st:'exp',date:'2026-03-01'},
+  {id:6,t:'村内红白事场地借用规则',cat:'村务公开',file:'村民代表大会决议',org:'村委会',st:'pub',date:'2026-07-20'},
+  {id:7,t:'村务公开栏查阅指引',cat:'村务公开',file:'村务公开工作制度',org:'村委会',st:'pub',date:'2026-06-10'},
+  {id:8,t:'自来水报修流程',cat:'生活服务',file:'村水管员工作制度',org:'村委会',st:'pub',date:'2026-05-08'},
+  {id:9,t:'快递进村收发指引',cat:'生活服务',file:'村邮政服务站说明',org:'村委会',st:'draft',date:'—'},
+  {id:10,t:'独生子女补贴申领说明',cat:'惠民政策',file:'卫健部门历史文件',org:'县卫健局',st:'off',date:'2025-12-31'},
+  {id:11,t:'老年食堂就餐登记办法',cat:'生活服务',file:'村两委会决议',org:'村委会',st:'draft',date:'—'}
+];
+var kbFilterCur='all';
+var ST_MAP={pub:['pub','已发布'],draft:['draft','草稿'],off:['off','已下线'],exp:['exp','已过期']};
+function kbRenderFilters(){
+  var counts={all:KB.length,pub:0,draft:0,off:0,exp:0};
+  KB.forEach(function(e){counts[e.st]++});
+  var defs=[['all','全部'],['pub','已发布'],['draft','草稿'],['off','已下线'],['exp','已过期']];
+  document.getElementById('kbFilters').innerHTML=defs.map(function(d){
+    return '<button class="kb-filter '+(kbFilterCur===d[0]?'on':'')+'" onclick="kbFilter(\''+d[0]+'\')">'+d[1]+'（'+counts[d[0]]+'）</button>'
+  }).join('');
+}
+function kbFilter(f){kbFilterCur=f;kbRenderFilters();kbRender()}
+function kbRender(){
+  var list=document.getElementById('kbList');
+  var rows=KB.filter(function(e){return kbFilterCur==='all'||e.st===kbFilterCur});
+  if(!rows.length){list.innerHTML='<div class="kb-empty">该状态下暂无条目</div>';return}
+  list.innerHTML=rows.map(function(e){
+    var c=ST_MAP[e.st];
+    var ops='';
+    if(e.st==='draft'||e.st==='off'||e.st==='exp')ops='<button class="btn sm" onclick="kbEdit('+e.id+')">编辑</button><button class="btn sm primary" onclick="kbPublish('+e.id+')">发布</button>';
+    if(e.st==='pub')ops='<button class="btn sm" onclick="kbEdit('+e.id+')">编辑</button><button class="btn sm" onclick="kbOfflineToggle('+e.id+')">下线</button>';
+    return '<div class="kb-row"><div class="r1"><span class="t"></span><span class="chip '+c[0]+'">'+c[1]+'</span></div>'+
+      '<div class="meta">分类：'+e.cat+' · 依据：《'+e.file+'》 · '+e.org+' · 最后更新：'+e.date+'</div>'+
+      '<div class="ops">'+ops+'</div>'+
+      '<div id="kbOff'+e.id+'" style="display:none"><div class="kb-confirm">下线原因（必填）：<select id="offReason'+e.id+'" onchange="if(this.value===\'其他\')document.getElementById(\'offOther'+e.id+'\').style.display=\'block\'"><option value="">请选择</option><option>政策已更新</option><option>内容有误</option><option>其他</option></select><textarea id="offOther'+e.id+'" style="display:none" placeholder="补充说明"></textarea><div style="margin-top:8px"><button class="btn sm primary" onclick="kbOfflineConfirm('+e.id+')">确认下线</button> <button class="btn sm" onclick="kbOfflineToggle('+e.id+')">取消</button></div></div></div>'+
+      '</div>';
+  }).join('');
+  rows.forEach(function(e){list.querySelector('.kb-row:nth-child('+(rows.indexOf(e)+1)+') .t').textContent='《'+e.t+'》'});
+}
+function kbLogAdd(msg){
+  var log=document.getElementById('kbLog');
+  log.insertAdjacentHTML('afterbegin','<div>'+now()+' · 管理员A（演示） · '+msg+'</div>');
+}
+function kbPublish(id){
+  var e=KB.filter(function(x){return x.id===id})[0];
+  var was=e.st;
+  e.st='pub';e.date='2026-10-13';
+  if(kbFilterCur!=='all'&&kbFilterCur!=='pub')kbFilterCur='all';
+  kbRenderFilters();kbRender();
+  kbLogAdd('发布条目《'+e.t+'》'+(was==='exp'?'（原状态：已过期，更新后重新发布）':was==='off'?'（原状态：已下线，重新发布）':''));
+  toast('已发布，即时对全体问答生效');
+}
+function kbOfflineToggle(id){var box=document.getElementById('kbOff'+id);box.style.display=box.style.display==='none'?'block':'none'}
+function kbOfflineConfirm(id){
+  var r=document.getElementById('offReason'+id).value;
+  if(!r){toast('请先选择下线原因（必填）');return}
+  var e=KB.filter(function(x){return x.id===id})[0];
+  e.st='off';e.date='2026-10-13';
+  kbRenderFilters();kbRender();
+  kbLogAdd('下线条目《'+e.t+'》，原因：'+r);
+  toast('已下线，不再参与问答');
+}
+var kbEditId=null;
+function kbOpenDrawer(mode,id){
+  kbEditId=id||null;
+  document.getElementById('kbDrawerTitle').textContent=mode==='add'?'新增知识条目':'编辑条目';
+  ['fTitle','fCat','fBody','fFile','fOrg'].forEach(function(f){document.getElementById(f).classList.remove('bad')});
+  document.getElementById('inTitle').value='';document.getElementById('inCat').value='';
+  document.getElementById('inBody').value='';document.getElementById('inFile').value='';
+  document.getElementById('inOrg').value='';document.getElementById('inExp').value='';
+  if(id){var e=KB.filter(function(x){return x.id===id})[0];
+    document.getElementById('inTitle').value=e.t;document.getElementById('inCat').value=e.cat;
+    document.getElementById('inBody').value='（演示：沿用原正文，此处省略）';document.getElementById('inFile').value=e.file;
+    document.getElementById('inOrg').value=e.org;}
+  document.getElementById('kbOverlay').classList.add('show');
+  document.getElementById('kbDrawer').classList.add('show');
+}
+function kbEdit(id){kbOpenDrawer('edit',id)}
+function kbCloseDrawer(){document.getElementById('kbOverlay').classList.remove('show');document.getElementById('kbDrawer').classList.remove('show')}
+function kbSave(draft){
+  var t=document.getElementById('inTitle').value.trim(),
+      c=document.getElementById('inCat').value,
+      b=document.getElementById('inBody').value.trim(),
+      f=document.getElementById('inFile').value.trim(),
+      o=document.getElementById('inOrg').value.trim();
+  var ok=true;
+  function mark(fid,bad){document.getElementById(fid).classList.toggle('bad',bad);if(bad)ok=false}
+  var dup=KB.some(function(e){return e.t===t&&e.id!==kbEditId});
+  mark('fTitle',!t||dup);mark('fCat',!c);mark('fBody',!b);mark('fFile',!f);mark('fOrg',!o);
+  if(!ok){if(dup)toast('标题与已有条目重复：请改为编辑原条目（口径唯一）');else toast('必填项缺失，已逐项标红');return}
+  if(kbEditId){
+    var e=KB.filter(function(x){return x.id===kbEditId})[0];
+    e.t=t;e.cat=c;e.file=f;e.org=o;e.date='2026-10-13';
+    kbLogAdd('编辑条目《'+t+'》并保存（状态保持：'+ST_MAP[e.st][1]+'）');
+    toast(draft?'已保存（已发布条目保持发布状态）':'已保存并发布');
+    if(!draft&&e.st!=='pub'){e.st='pub';kbLogAdd('发布条目《'+t+'》')}
+  }else{
+    var nid=Math.max.apply(null,KB.map(function(x){return x.id}))+1;
+    KB.push({id:nid,t:t,cat:c,file:f,org:o,st:draft?'draft':'pub',date:'2026-10-13'});
+    kbLogAdd(draft?'新增条目《'+t+'》（草稿）':'新增并发布条目《'+t+'》');
+    toast(draft?'已保存为草稿':'已新增并发布');
+  }
+  kbRenderFilters();kbRender();kbCloseDrawer();
+}
+document.getElementById('kbSaveDraft').onclick=function(){kbSave(true)};
+document.getElementById('kbPublish').onclick=function(){kbSave(false)};
+
+/* ============ Demo 03：未答问题 ============ */
+var UN=[
+  {id:1,q:'明年大豆补贴标准是多少？',n:3,time:'10-13 09:20',st:'pend'},
+  {id:2,q:'快递到村后收费吗？怎么收？',n:1,time:'10-12 16:40',st:'pend'},
+  {id:3,q:'危房改造补贴现在还能申请吗？',n:2,time:'10-11 11:05',st:'pend'},
+  {id:4,q:'帮村民代办医保需要哪些委托材料？',n:1,time:'10-10 15:22',st:'done',link:'医保代办委托材料清单'},
+  {id:5,q:'想查村里去年修路的账目',n:1,time:'10-09 10:18',st:'closed',reason:'属村务公开线下查阅流程，已电话指引'}
+];
+function unRender(){
+  var box=document.getElementById('unList');
+  var pend=UN.filter(function(u){return u.st==='pend'});
+  document.getElementById('unEmpty').style.display=pend.length?'none':'block';
+  box.innerHTML=UN.map(function(u){
+    var chip=u.st==='pend'?'<span class="chip pend">待处理</span>':u.st==='done'?'<span class="chip done">已补充</span>':'<span class="chip closed">已关闭</span>';
+    var m='提问次数：'+u.n+' · 最近：'+u.time;
+    if(u.st==='done')m+=' · 已关联条目：《'+u.link+'》';
+    if(u.st==='closed')m+=' · 原因：'+u.reason;
+    var ops='';
+    if(u.st==='pend')ops='<button class="btn sm primary" onclick="unFormToggle('+u.id+',\'supp\')">去补充</button><button class="btn sm" onclick="unFormToggle('+u.id+',\'close\')">关闭</button>';
+    return '<div class="un-row"><div class="r1"><span class="q"></span>'+chip+'</div>'+
+      '<div class="m">'+m+'</div>'+(ops?'<div class="ops">'+ops+'</div>':'')+
+      '<div id="unF'+u.id+'" style="display:none"></div></div>';
+  }).join('');
+  UN.forEach(function(u){var el=box.querySelector('.un-row:nth-child('+(UN.indexOf(u)+1)+') .q');if(el)el.textContent=u.q});
+}
+function unFormToggle(id,type){
+  var box=document.getElementById('unF'+id);
+  if(box.style.display==='block'){box.style.display='none';return}
+  box.style.display='block';
+  var u=UN.filter(function(x){return x.id===id})[0];
+  if(type==='supp'){
+    box.innerHTML='<div class="un-form">'+
+      '<label>将补充为知识条目（原问题已带入参考）</label>'+
+      '<input value="'+u.q+'" disabled style="background:#f0f2f0">'+
+      '<label style="margin-top:8px">标题 *</label><input id="unT'+id+'" placeholder="如：大豆补贴政策说明">'+
+      '<label style="margin-top:8px">正文 *</label><textarea id="unB'+id+'" placeholder="依据官方文件写清口径"></textarea>'+
+      '<label style="margin-top:8px">依据文件 *</label><input id="unFile'+id+'" placeholder="官方文件名">'+
+      '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn sm" onclick="unSave('+id+',true)">保存草稿</button><button class="btn sm primary" onclick="unSave('+id+',false)">保存并发布</button><button class="btn sm" onclick="unFormToggle('+id+',\'supp\')">取消</button></div>'+
+      '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">提示：条目"发布后"该问题才会标记为"已补充"（见 FR-04 规则 2）</div></div>';
+  }else{
+    box.innerHTML='<div class="un-form"><label>关闭原因（必填）</label>'+
+      '<select id="unR'+id+'"><option value="">请选择</option><option>超出服务范围</option><option>属线下办理事项</option><option>其他</option></select>'+
+      '<div style="margin-top:8px"><button class="btn sm primary" onclick="unClose('+id+')">确认关闭</button> <button class="btn sm" onclick="unFormToggle('+id+',\'close\')">取消</button></div></div>';
+  }
+}
+function unSave(id,draft){
+  var t=document.getElementById('unT'+id).value.trim(),
+      b=document.getElementById('unB'+id).value.trim(),
+      f=document.getElementById('unFile'+id).value.trim();
+  if(!t||!b||!f){toast('标题 / 正文 / 依据文件均为必填');return}
+  var u=UN.filter(function(x){return x.id===id})[0];
+  if(draft){document.getElementById('unF'+id).style.display='none';toast('草稿已保存；条目发布后该问题将标记为"已补充"')}
+  else{u.st='done';u.link=t;unRender();toast('条目已发布，问题已标记为"已补充"')}
+}
+function unClose(id){
+  var r=document.getElementById('unR'+id).value;
+  if(!r){toast('请先选择关闭原因（必填）');return}
+  var u=UN.filter(function(x){return x.id===id})[0];
+  u.st='closed';u.reason=r;unRender();toast('已关闭');
+}
+
+/* ============ 初始化 ============ */
+kbRenderFilters();kbRender();unRender();
+</script>
+</body>
+</html>

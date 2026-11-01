@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}账号管理 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="page-title">账号管理</div>
+  <div class="page-sub">初始/临时密码仅在创建/重置响应中显示一次，请当场转交本人；首次登录强制改密。</div>
+  <div style="margin-bottom:12px; text-align:right;">
+    <button class="btn primary sm" onclick="openCreate()">新增账号</button>
+  </div>
+  <table class="grid">
+    <thead><tr><th style="width:46px;">ID</th><th>用户名</th><th>姓名</th><th>所属</th>
+      <th style="width:82px;">角色</th><th style="width:82px;">状态</th><th>创建时间</th>
+      <th style="width:220px;">操作</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<!-- 新增账号 -->
+<div class="overlay" id="createOverlay">
+  <div class="modal" style="width:480px;">
+    <button class="close-x" onclick="createOverlay.classList.remove('show')">×</button>
+    <h3>新增账号</h3>
+    <label class="f"><b>用户名<span class="req">*</span>（登录用，2-30 位字母/数字/下划线）</b>
+      <input type="text" id="a_username" maxlength="30"></label>
+    <label class="f"><b>姓名<span class="req">*</span></b>
+      <input type="text" id="a_display" maxlength="50"></label>
+    <label class="f"><b>所属村/部门</b>
+      <input type="text" id="a_org" maxlength="100" placeholder="如：村委会"></label>
+    <label class="f"><b>角色</b>
+      <select id="a_role"><option value="staff">工作人员</option><option value="admin">管理员</option></select></label>
+    <div id="pwBox" style="display:none;">
+      <div style="font-size:13px; color:var(--warn);">初始密码（仅显示一次，请转交本人）：</div>
+      <div class="pw-show" id="pwVal"></div>
+    </div>
+    <div class="foot">
+      <button class="btn ghost" onclick="createOverlay.classList.remove('show')">关闭</button>
+      <button class="btn primary" id="btnCreate" onclick="doCreate()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 重置密码结果 -->
+<div class="overlay" id="resetOverlay">
+  <div class="modal" style="width:460px;">
+    <h3>临时密码</h3>
+    <div style="font-size:13px; color:var(--warn);">以下临时密码仅显示一次，该账号下次登录将强制改密：</div>
+    <div class="pw-show" id="resetPw"></div>
+    <div class="foot"><button class="btn primary" onclick="resetOverlay.classList.remove('show')">我已转交</button></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function load() {
+  var data = await api('/api/accounts');
+  tbody.innerHTML = '';
+  data.items.forEach(function (u) {
+    var tr = document.createElement('tr');
+    var statusHtml = u.status === 'active'
+      ? '<span class="badge b-green">正常</span>' + (u.locked_until ? ' <span class="badge b-red">锁定中</span>' : '')
+      : '<span class="badge b-gray">已停用</span>';
+    var acts = '';
+    if (u.status === 'active') {
+      acts += '<button class="btn sm" onclick="doReset(' + u.id + ')">重置密码</button>';
+      acts += '<button class="btn sm danger" onclick="doDisable(' + u.id + ',\'' + esc(u.username) + '\')">停用</button>';
+    } else {
+      acts += '<span style="font-size:12px; color:var(--text-muted);">记录保留，登录已拒绝</span>';
+    }
+    tr.innerHTML = '<td>' + u.id + '</td><td class="mono">' + esc(u.username) + '</td>'
+      + '<td>' + esc(u.display_name) + '</td><td>' + esc(u.org_label || '—') + '</td>'
+      + '<td>' + (u.role === 'admin' ? '管理员' : '工作人员') + '</td>'
+      + '<td>' + statusHtml + '</td><td class="mono" style="font-size:12px;">' + u.created_at + '</td>'
+      + '<td><div class="row-actions">' + acts + '</div></td>';
+    tbody.appendChild(tr);
+  });
+}
+function openCreate() {
+  ['a_username', 'a_display', 'a_org'].forEach(function (id) { document.getElementById(id).value = ''; });
+  a_role.value = 'staff';
+  document.getElementById('pwBox').style.display = 'none';
+  createOverlay.classList.add('show');
+}
+async function doCreate() {
+  btnCreate.disabled = true;
+  try {
+    var r = await api('/api/accounts', 'POST', {
+      username: a_username.value.trim(), display_name: a_display.value.trim(),
+      org_label: a_org.value.trim(), role: a_role.value
+    });
+    pwVal.textContent = r.initial_password;
+    document.getElementById('pwBox').style.display = 'block';
+    toast('账号已创建'); load();
+  } catch (e) { toast(e.message, true); }
+  btnCreate.disabled = false;
+}
+async function doDisable(id, name) {
+  if (!confirm('确认停用账号「' + name + '」？其问答记录将保留，登录立即失效。')) return;
+  try { await api('/api/accounts/' + id + '/disable', 'POST', {}); toast('已停用'); load(); }
+  catch (e) { toast(e.message, true); }
+}
+async function doReset(id) {
+  if (!confirm('确认重置密码？将生成新的临时密码，该账号现有登录会全部失效。')) return;
+  try {
+    var r = await api('/api/accounts/' + id + '/reset-password', 'POST', {});
+    resetPw.textContent = r.temp_password;
+    resetOverlay.classList.add('show');
+    load();
+  } catch (e) { toast(e.message, true); }
+}
+load();
+</script>
+{% endblock %}

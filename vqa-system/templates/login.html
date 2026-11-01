@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登录 - 乡村智能问答系统</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container" style="max-width:420px; margin-top:9vh;">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:22px; font-weight:700; color:var(--brand); margin-bottom:4px;">乡村智能问答系统</div>
+    <div class="page-sub">面向村干部与基层工作人员的村务问答助手</div>
+  </div>
+  <div class="card">
+    <label class="f"><b>用户名</b>
+      <input type="text" id="username" autocomplete="username" placeholder="请输入用户名">
+    </label>
+    <label class="f"><b>密码</b>
+      <input type="password" id="password" autocomplete="current-password" placeholder="请输入密码">
+    </label>
+    <div id="err" style="display:none; color:var(--danger); font-size:13px; margin-bottom:10px;"></div>
+    <button class="btn primary" style="width:100%;" id="btnLogin" onclick="doLogin()">登 录</button>
+    <div class="hint" style="margin-top:12px;">账号由管理员统一创建；连续 5 次密码错误将锁定 15 分钟。</div>
+  </div>
+</div>
+<script>
+async function doLogin() {
+  var btn = document.getElementById('btnLogin');
+  var err = document.getElementById('err');
+  btn.disabled = true; btn.textContent = '登录中…'; err.style.display = 'none';
+  try {
+    var resp = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username.value.trim(), password: password.value })
+    });
+    var data = await resp.json();
+    if (!resp.ok) throw new Error((data.detail && data.detail.message) || '登录失败');
+    location.href = data.redirect || '/';
+  } catch (e) {
+    err.textContent = e.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = '登 录';
+  }
+}
+document.getElementById('password').addEventListener('keydown', function (ev) {
+  if (ev.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>

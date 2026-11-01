@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}未答问题 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="page-title">未答问题</div>
+  <div class="page-sub">同一问题重复未命中自动聚合成组（语义相似度 ≥ 阈值）；补充发布后自动「已补充」并双向关联；误聚合可手动拆分。</div>
+  <div class="tabs">
+    <a href="javascript:void(0)" data-st="pending" class="on">待处理</a>
+    <a href="javascript:void(0)" data-st="supplemented">已补充</a>
+    <a href="javascript:void(0)" data-st="closed">已关闭</a>
+    <a href="javascript:void(0)" data-st="">全部</a>
+  </div>
+  <div id="groups"></div>
+  <div class="empty" id="empty" style="display:none;">暂无未答问题组</div>
+</div>
+
+<!-- 组详情 / 拆分 -->
+<div class="overlay" id="detailOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="detailOverlay.classList.remove('show')">×</button>
+    <h3 id="detailTitle">组详情</h3>
+    <div id="detailMeta" style="color:var(--text-muted); font-size:13px; margin-bottom:8px;"></div>
+    <div id="detailItems" style="max-height:340px; overflow:auto;"></div>
+    <div class="foot" id="splitFoot" style="justify-content:space-between;">
+      <span style="font-size:12px; color:var(--text-muted);">勾选误聚合的问题拆分出新组（原组至少保留一条）</span>
+      <button class="btn primary" id="btnSplit" onclick="doSplit()">拆分选中</button>
+    </div>
+  </div>
+</div>
+
+<!-- 关闭原因 -->
+<div class="overlay" id="closeOverlay">
+  <div class="modal" style="width:460px;">
+    <button class="close-x" onclick="closeOverlay.classList.remove('show')">×</button>
+    <h3>关闭问题组</h3>
+    <div id="closeName" style="font-weight:600; margin-bottom:10px;"></div>
+    <label class="f"><b>关闭原因<span class="req">*</span>（必填，留痕）</b>
+      <select id="close_reason_sel">
+        <option>不属于本系统受理范围</option><option>问题表述不清无法补充</option>
+        <option>敏感问题不宜入库</option><option>已有线下渠道解决</option><option>其他</option>
+      </select></label>
+    <label class="f"><b>补充说明</b>
+      <input type="text" id="close_reason_text" maxlength="200"></label>
+    <div class="foot">
+      <button class="btn ghost" onclick="closeOverlay.classList.remove('show')">取消</button>
+      <button class="btn danger" onclick="doClose()">确认关闭</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+var page = 1, curStatus = 'pending', detailGroup = null, picked = {};
+var stMap = { pending: ['待处理', 'b-yellow'], supplemented: ['已补充', 'b-green'], closed: ['已关闭', 'b-gray'] };
+document.querySelectorAll('.tabs a[data-st]').forEach(function (a) {
+  a.onclick = function () {
+    document.querySelectorAll('.tabs a[data-st]').forEach(function (x) { x.classList.remove('on'); });
+    a.classList.add('on'); curStatus = a.getAttribute('data-st'); load();
+  };
+});
+async function load() {
+  var data = await api('/api/unanswered/groups?status=' + curStatus + '&page=' + page);
+  var box = document.getElementById('groups');
+  box.innerHTML = '';
+  data.items.forEach(function (g) { box.appendChild(groupCard(g)); });
+  document.getElementById('empty').style.display = data.items.length ? 'none' : 'block';
+}
+function groupCard(g) {
+  var st = stMap[g.status] || [g.status, 'b-gray'];
+  var div = document.createElement('div');
+  div.className = 'group-card';
+  var acts = '';
+  if (g.status === 'pending') {
+    acts += '<a class="btn sm primary" href="/admin/kb?group_id=' + g.id + '">去补充</a>';
+    acts += '<button class="btn sm" onclick="openDetail(' + g.id + ')">详情/拆分</button>';
+    acts += '<button class="btn sm danger" onclick="askClose(' + g.id + ')">关闭</button>';
+  } else {
+    acts += '<button class="btn sm" onclick="openDetail(' + g.id + ')">详情</button>';
+  }
+  div.innerHTML = '<div class="gq">' + esc(g.representative_question) + '</div>'
+    + '<div class="meta">被问 ' + g.question_count + ' 次 · 首次 ' + g.first_asked_at + ' · 最近 ' + g.last_asked_at
+    + ' · <span class="badge ' + st[1] + '">' + st[0] + '</span>'
+    + (g.related_entry ? ' → 已补充：<a href="/admin/kb" onclick="sessionStorage.setItem(\'kfilter\',\'published\')">' + esc(g.related_entry.title) + '</a>' : '')
+    + (g.close_reason ? ' · 关闭原因：' + esc(g.close_reason) : '') + '</div>'
+    + '<div class="acts">' + acts + '</div>';
+  return div;
+}
+async function openDetail(gid) {
+  var data = await api('/api/unanswered/groups/' + gid);
+  detailGroup = gid; picked = {};
+  detailTitle.textContent = '组 #' + gid + '（共 ' + data.group.question_count + ' 次）';
+  detailMeta.textContent = '代表问题：' + data.group.representative_question;
+  var box = document.getElementById('detailItems');
+  box.innerHTML = '';
+  var pendingOnly = data.group.status === 'pending';
+  document.getElementById('splitFoot').style.display = pendingOnly ? 'flex' : 'none';
+  data.items.forEach(function (it) {
+    var line = document.createElement('div');
+    line.className = 'item-line';
+    var chk = pendingOnly ? '<input type="checkbox" onchange="this.checked ? picked[' + it.id + ']=1 : delete picked[' + it.id + ']">' : '';
+    line.innerHTML = '<label style="display:flex; gap:8px; align-items:flex-start;">' + chk
+      + '<span style="flex:1;">' + esc(it.question) + '</span>'
+      + '<span style="color:var(--text-muted); white-space:nowrap;">' + it.created_at + '</span></label>';
+    box.appendChild(line);
+  });
+  detailOverlay.classList.add('show');
+}
+async function doSplit() {
+  var ids = Object.keys(picked).map(Number);
+  if (!ids.length) { toast('请先勾选要拆出的问题', true); return; }
+  try {
+    var r = await api('/api/unanswered/groups/' + detailGroup + '/split', 'POST', { item_ids: ids });
+    toast('已拆分出新组 #' + r.new_group_id);
+    detailOverlay.classList.remove('show'); load();
+  } catch (e) { toast(e.message, true); }
+}
+var closeGid = null;
+function askClose(gid) {
+  closeGid = gid;
+  closeName.textContent = '组 #' + gid;
+  closeOverlay.classList.add('show');
+}
+async function doClose() {
+  var reason = close_reason_sel.value + (close_reason_text.value.trim() ? '：' + close_reason_text.value.trim() : '');
+  try {
+    await api('/api/unanswered/groups/' + closeGid + '/close', 'POST', { reason: reason });
+    toast('已关闭'); closeOverlay.classList.remove('show'); load();
+  } catch (e) { toast(e.message, true); }
+}
+load();
+</script>
+{% endblock %}

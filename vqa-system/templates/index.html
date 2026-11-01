@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}问答工作台 - 乡村智能问答系统{% endblock %}
+{% block content %}
+<div class="workbench">
+  <div>
+    <div class="card ask-panel">
+      <div class="page-title">智能问答</div>
+      <div class="page-sub">答案依据已发布的官方知识条目生成，并标注来源；无法可靠回答时会如实告知。</div>
+      <div class="privacy-tip">请勿输入村民姓名、身份证号等个人敏感信息；涉法涉诉、医疗诊断、信访举报、个人资金决策类问题不予作答。</div>
+      <textarea class="q" id="question" maxlength="500"
+        placeholder="例如：申请低保需要准备哪些材料？"></textarea>
+      <div class="counter"><span id="cnt">0</span> / 500</div>
+      <div style="margin-top:10px;">
+        <button class="btn primary" id="btnAsk" onclick="doAsk()">提交问题</button>
+      </div>
+      <div class="answer-zone" id="answerZone"></div>
+    </div>
+  </div>
+  <div class="card side">
+    <div class="page-title" style="font-size:15px;">我的最近提问</div>
+    <div class="side-list">
+      {% for r in recent %}
+      <div class="item">
+        <span class="q">{{ r.question }}</span>
+        <span class="meta">
+          <span>{{ r.created_at }}</span>
+          <span>
+            {% if r.status == 'answered' %}<span class="badge b-green">已回答</span>
+            {% elif r.status == 'missed' %}<span class="badge b-yellow">未命中</span>
+            {% else %}<span class="badge b-red">超出范围</span>{% endif %}
+          </span>
+        </span>
+      </div>
+      {% else %}
+      <div class="empty" style="padding:14px 0;">还没有提问记录</div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:10px;"><a href="/records" style="font-size:13px;">查看全部记录 →</a></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+var lastQ = '';
+var qEl = document.getElementById('question');
+qEl.addEventListener('input', function () { document.getElementById('cnt').textContent = qEl.value.length; });
+
+function resultCard(type, inner) {
+  return '<div class="result-card ' + type + '">' + inner + '</div>';
+}
+function citeHtml(c) {
+  return '<div class="cite-box"><div class="t">《' + esc(c.title) + '》</div>'
+    + '<div class="d">分类：' + esc(c.category) + ' · 发布单位：' + esc(c.publish_org)
+    + ' · 依据文件：' + esc(c.basis_file)
+    + (c.last_verified_at ? ' · 最后核实：' + esc(c.last_verified_at) : '') + '</div>'
+    + (c.snippet ? '<div class="d">依据片段：' + esc(c.snippet) + '</div>' : '') + '</div>';
+}
+function renderResult(r) {
+  var zone = document.getElementById('answerZone');
+  var html = '';
+  if (r.status === 'answered') {
+    html += '<h4 style="color:var(--brand-dark);">答案</h4>';
+    html += '<div class="ans">' + esc(r.answer) + '</div>';
+    if (r.citations && r.citations.length) {
+      html += '<div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">答案依据（引用条目）：</div>';
+      r.citations.forEach(function (c) { html += citeHtml(c); });
+    }
+    if (r.timeliness) html += '<div class="meta-line">' + esc(r.timeliness) + '</div>';
+    if (r.degraded) html += '<div class="meta-line">注：本次检索走了降级通道（仅关键词）。</div>';
+    html += '<div class="fb-row" id="fbRow"><span>这条答案对您有帮助吗？</span>'
+      + '<button class="btn sm" onclick="sendFb(\'useful\')">有用</button>'
+      + '<button class="btn sm" onclick="sendFb(\'useless\')">无用</button></div>';
+    html += '<div class="meta-line">' + esc(r.disclaimer || '') + '</div>';
+    zone.innerHTML = resultCard('answered', html);
+  } else if (r.status === 'missed') {
+    html += '<h4 style="color:var(--warn);">暂无可靠答案</h4>';
+    html += '<div class="ans">' + esc(r.message) + '</div>';
+    if (r.related && r.related.length) {
+      html += '<div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">以下条目可能相关，供参考：</div>';
+      r.related.forEach(function (c) {
+        html += '<div class="cite-box"><div class="t">《' + esc(c.title) + '》</div><div class="d">分类：'
+          + esc(c.category) + ' · 发布单位：' + esc(c.publish_org) + '</div></div>';
+      });
+    }
+    if (r.referral) html += '<div class="meta-line">转办建议：' + esc(r.referral.org) + ' —— ' + esc(r.referral.text) + '</div>';
+    html += '<div class="meta-line">该问题已记录，管理员补充知识后将能直接命中。</div>';
+    zone.innerHTML = resultCard('missed', html);
+  } else if (r.status === 'out_of_scope') {
+    html += '<h4 style="color:var(--danger);">该问题超出服务范围（' + esc(r.category) + '）</h4>';
+    html += '<div class="ans">' + esc(r.advice) + '</div>';
+    html += '<div class="meta-line">' + esc(r.disclaimer || '') + '</div>';
+    zone.innerHTML = resultCard('sensitive', html);
+  }
+}
+async function doAsk() {
+  var q = qEl.value.trim();
+  if (!q) { toast('请输入问题', true); return; }
+  lastQ = q;
+  var btn = document.getElementById('btnAsk');
+  btn.disabled = true; btn.textContent = '正在生成答案…';
+  document.getElementById('answerZone').innerHTML =
+    '<div class="empty" style="padding:20px;">正在检索知识库并生成答案，请稍候…</div>';
+  try {
+    var r = await api('/api/ask', 'POST', { question: q });
+    renderResult(r);
+  } catch (e) {
+    if (e.status === 503) {
+      document.getElementById('answerZone').innerHTML = resultCard('error',
+        '<h4 style="color:var(--danger);">生成失败</h4><div class="ans">' + esc(e.message) + '</div>'
+        + '<button class="btn sm primary" onclick="retryAsk()">点击重试</button>');
+    } else if (e.status === 401) {
+      location.href = '/login';
+    } else if (e.code === 'must_change_password') {
+      location.href = '/change-password';
+    } else {
+      document.getElementById('answerZone').innerHTML = resultCard('error',
+        '<h4 style="color:var(--danger);">请求失败</h4><div class="ans">' + esc(e.message) + '</div>');
+    }
+  }
+  btn.disabled = false; btn.textContent = '提交问题';
+}
+function retryAsk() { qEl.value = lastQ; doAsk(); }
+async function sendFb(value) {
+  try {
+    var rid = document.querySelector('.result-card.answered .meta-line');  // 占位
+    rid = window._lastRecordId;
+    await api('/api/records/' + rid + '/feedback', 'POST', { value: value });
+    var row = document.getElementById('fbRow');
+    row.innerHTML = '<span>已记录您的评价：' + (value === 'useful' ? '有用' : '无用') + '，感谢反馈。</span>';
+    toast('反馈成功');
+  } catch (e) { toast(e.message, true); }
+}
+// 渲染结果时记录 record_id 供反馈使用
+var _renderResult = renderResult;
+renderResult = function (r) { window._lastRecordId = r.record_id; _renderResult(r); };
+</script>
+{% endblock %}
