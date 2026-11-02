@@ -24,13 +24,12 @@ class RegisterBody(BaseModel):
     password: str
     confirm: str
     display_name: str = ""
-    role: str = "staff"          # staff / admin（admin 需邀请码）
-    invite_code: str = ""        # 管理员注册邀请码
+    role: str = "staff"          # staff / admin（注册时自选）
 
 
 @router.post("/register")
 def register(body: RegisterBody, request: Request, response: Response, db=Depends(get_db)):
-    """自助注册：默认 staff；选 admin 须提供邀请码（防止越权自提权）"""
+    """自助注册：角色自选（staff/admin），创建后自动登录"""
     username = body.username.strip()
     display_name = body.display_name.strip() or username
     role = body.role if body.role in ("staff", "admin") else "staff"
@@ -46,8 +45,6 @@ def register(body: RegisterBody, request: Request, response: Response, db=Depend
         raise err(400, "weak_password", "密码至少 8 位，且不得与用户名相同")
     if db.query(User).filter(User.username == username).first():
         raise err(409, "username_taken", "该用户名已被使用")
-    if role == "admin" and body.invite_code != settings.admin_invite_code:
-        raise err(403, "invalid_invite", "邀请码错误，无法注册管理员账号")
 
     user = User(username=username, display_name=display_name, org_label="",
                 role=role, password_hash=hash_password(body.password),
