@@ -25,6 +25,20 @@
     <label class="f"><b>确认密码</b>
       <input type="password" id="confirm_pwd" autocomplete="new-password" placeholder="再输入一次密码">
     </label>
+    <label class="f"><b>账号角色</b></label>
+    <div style="display:flex; gap:16px; margin-bottom:14px; font-size:14px;">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="radio" name="role" value="staff" checked onchange="toggleInvite()"> 工作人员（提问与查看记录）
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="radio" name="role" value="admin" onchange="toggleInvite()"> 管理员（知识库与账号管理）
+      </label>
+    </div>
+    <div id="invite_row" style="display:none; margin-bottom:14px;">
+      <label class="f"><b>管理员邀请码</b>
+        <input type="text" id="invite_code" maxlength="50" placeholder="由现有管理员提供">
+      </label>
+    </div>
     <div id="err" style="display:none; color:var(--danger); font-size:13px; margin-bottom:10px;"></div>
     <button class="btn primary" style="width:100%;" id="btnReg" onclick="doRegister()">注 册</button>
     <div class="hint" style="margin-top:12px; text-align:center;">
@@ -33,10 +47,16 @@
   </div>
 </div>
 <script>
+function toggleInvite() {
+  var isAdmin = document.querySelector('input[name="role"][value="admin"]').checked;
+  document.getElementById('invite_row').style.display = isAdmin ? 'block' : 'none';
+}
+
 async function doRegister() {
   var btn = document.getElementById('btnReg');
   var err = document.getElementById('err');
   btn.disabled = true; btn.textContent = '注册中…'; err.style.display = 'none';
+  var role = document.querySelector('input[name="role"]:checked').value;
   try {
     var resp = await fetch('/api/auth/register', {
       method: 'POST',
@@ -45,7 +65,9 @@ async function doRegister() {
         display_name: display_name.value.trim(),
         username: username.value.trim(),
         password: password.value,
-        confirm: confirm_pwd.value
+        confirm: confirm_pwd.value,
+        role: role,
+        invite_code: invite_code.value.trim()
       })
     });
     var data = await resp.json();

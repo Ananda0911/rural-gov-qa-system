@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     login_max_fails: int = 5
     lock_minutes: int = 15
     session_days: int = 7
+    admin_invite_code: str = "VQA-ADMIN-2026"  # 注册管理员角色所需邀请码
 
     # 路径
     db_path: str = str(BASE_DIR / "data" / "app.db")
