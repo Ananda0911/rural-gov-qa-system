@@ -1,0 +1,5 @@
+# Windows 批处理脚本必须使用 CRLF 行尾（LF 会导致 cmd 解析跨行括号块出错）
+*.bat text eol=crlf
+*.png binary
+*.db binary
+*.zip binary
